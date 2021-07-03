@@ -1,0 +1,14 @@
+[package]
+name = "inku"
+version = "0.1.0"
+authors = ["Odin Dutton <odindutton@gmail.com>"]
+edition = "2018"
+description = "An RGB color backed by a `u32` for simple color manipulation"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/twe4ked/inku"
+readme = "README.md"
+keywords = ["color", "u32", "rgb"]
+categories = ["graphics"]
+
+[dev-dependencies]
+crossterm = "0.20.0"
