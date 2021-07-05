@@ -65,7 +65,7 @@ impl Color {
     ///         ^^ blue
     /// ```
     #[must_use]
-    pub const fn new(color: u32) -> Self {
+    pub fn new(color: u32) -> Self {
         Self(color)
     }
 
