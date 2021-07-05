@@ -243,7 +243,8 @@ impl From<Color> for (u8, u8, u8) {
 fn assert_percent(percent: f64) {
     assert!(
         (0.0..=1.0).contains(&percent),
-        "percent must be between 0.0 and 1.0"
+        "percent ({:?}) must be between 0.0 and 1.0",
+        percent
     );
 }
 
