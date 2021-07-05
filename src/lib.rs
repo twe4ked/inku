@@ -1,20 +1,38 @@
 #![allow(clippy::many_single_char_names)]
+#![warn(missing_docs)]
 
 //! An RGBA color backed by a `u32`.
 //!
-//! Example:
+//! # Examples
 //!
 //! ```
-//! type Color = inku::Color<inku::ZRGB>;
+//! type RGBA = inku::Color<inku::RGBA>;
 //!
-//! let color = Color::new(0x000000);
+//! let color = RGBA::new(0x000000ff);
 //! let new_color = color
 //!     // Lighten the color by 10%
 //!     .lighten(0.1)
 //!     // Saturate the color by 30%
 //!     .saturate(0.3);
 //!
-//! assert_eq!(new_color.to_u32(), 0x201111);
+//! assert_eq!(new_color.to_u32(), 0x201111ff);
+//! ```
+//!
+//! # Storage Formats
+//!
+//! An RGBA color backed by a `u32`.
+//!
+//! There are multiple storage formats to choose from, [`ZRGB`] and [`RGBA`]. These determine how
+//! the underlying `u32` is laid out.
+//!
+//! ```
+//! type RGBA = inku::Color<inku::RGBA>;
+//! type ZRGB = inku::Color<inku::ZRGB>;
+//!
+//! assert_eq!(RGBA::new(0xfacadeff).to_u32(), 0xfacadeff);
+//!
+//! // NOTE: The high byte is zeroed out
+//! assert_eq!(ZRGB::new(0xfffacade).to_u32(), 0x00facade);
 //! ```
 //!
 //! # Manipulations are lossy
@@ -23,16 +41,16 @@
 //! Consider the following:
 //!
 //! ```
-//! # type Color = inku::Color<inku::ZRGB>;
-//! let color = Color::new(0xfacade);
+//! type RGBA = inku::Color<inku::RGBA>;
+//! let color = RGBA::new(0xfacadeff);
 //!
 //! // We convert the RGB values to HSL and desaturated the color
 //! let desaturated_color = color.desaturate(0.1);
-//! assert_eq!(0xf7ccde, desaturated_color.to_u32());
+//! assert_eq!(0xf7ccdeff, desaturated_color.to_u32());
 //!
 //! // We don't know what our original hue was, so we can't get back to the original color
 //! let resaturated_color = desaturated_color.saturate(0.1);
-//! assert_eq!(0xf9c9dd, resaturated_color.to_u32());
+//! assert_eq!(0xf9c9ddff, resaturated_color.to_u32());
 //! ```
 
 use std::fmt;
@@ -41,15 +59,14 @@ use std::marker::PhantomData;
 
 /// An RGBA color backed by a `u32`.
 ///
-/// Example:
+/// There are multiple storage formats to choose from, see the [crate level documentation][crate]
+/// for more info.
+///
+/// # Examples
 ///
 /// ```
-/// type Color = inku::Color<inku::ZRGB>;
-///
-/// let color = Color::new(0x000000);
-/// // Lighten the color by 10%
-/// let lighter_color = color.lighten(0.1);
-/// assert_eq!(lighter_color.to_u32(), 0x191919);
+/// type RGBA = inku::Color<inku::RGBA>;
+/// assert_eq!(RGBA::new(0xfacadeff).to_u32(), 0xfacadeff);
 /// ```
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
 pub struct Color<T: Storage>(u32, PhantomData<T>);
@@ -145,7 +162,7 @@ impl Storage for RGBA {
 impl<T: Storage> Color<T> {
     /// Initializes a new `Color` from a `u32`.
     ///
-    /// Example:
+    /// # Examples
     ///
     /// ```
     /// type Color = inku::Color<inku::ZRGB>;
@@ -258,7 +275,7 @@ impl<T: Storage> Color<T> {
         Color::from_hsla(h, s, l, a)
     }
 
-    /// Returns the underlying u32.
+    /// Returns the underlying `u32`.
     pub fn to_u32(self) -> u32 {
         self.0
     }
