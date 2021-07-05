@@ -117,6 +117,7 @@ fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
 ///         ^^ blue
 /// ```
 #[derive(PartialEq, Copy, Clone)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct ZRGB;
 
 impl Storage for ZRGB {
@@ -149,6 +150,7 @@ impl Storage for ZRGB {
 ///         ^^ alpha
 /// ```
 #[derive(PartialEq, Copy, Clone)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct RGBA;
 
 impl Storage for RGBA {
