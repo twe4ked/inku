@@ -1,6 +1,6 @@
 #![allow(clippy::many_single_char_names)]
 
-//! An RGB color backed by a `u32`.
+//! An RGBA color backed by a `u32`.
 //!
 //! Example:
 //!
@@ -39,7 +39,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::marker::PhantomData;
 
-/// An RGB color backed by a `u32`.
+/// An RGBA color backed by a `u32`.
 ///
 /// Example:
 ///
@@ -71,6 +71,7 @@ mod private {
     pub trait Sealed {}
 
     impl Sealed for super::ZRGB {}
+    impl Sealed for super::RGBA {}
 }
 
 /// ZRGB (0RGB)
@@ -108,6 +109,36 @@ impl Storage for ZRGB {
     fn write_hex(w: &mut dyn Write, color: u32) -> std::fmt::Result {
         // The high byte is ignored
         write!(w, "{:#08x}", color & 0xffffff)
+    }
+}
+
+/// RGBA
+///
+/// ```text
+/// 0x00000000
+///   ^^ red
+///     ^^ green
+///       ^^ blue
+///         ^^ alpha
+/// ```
+#[derive(PartialEq, Copy, Clone)]
+pub struct RGBA;
+
+impl Storage for RGBA {
+    fn decode(color: u32) -> (u8, u8, u8, u8) {
+        let r = (color >> 24) & 0xff;
+        let g = (color >> 16) & 0xff;
+        let b = (color >> 8) & 0xff;
+        let a = color & 0xff;
+        (r as u8, g as u8, b as u8, a as u8)
+    }
+
+    fn encode(r: u8, g: u8, b: u8, a: u8) -> u32 {
+        let r = r as u32;
+        let g = g as u32;
+        let b = b as u32;
+        let a = a as u32;
+        (r << 24) | (g << 16) | (b << 8) | a
     }
 }
 
@@ -575,5 +606,13 @@ mod tests {
         assert_eq!(0x00bbccdd, ZRGB::new(0xaabbccdd));
         assert_eq!((0xbb, 0xcc, 0xdd, 0x00), ZRGB::decode(0xaabbccdd));
         assert_eq!(0x00bbccdd, ZRGB::encode(0xbb, 0xcc, 0xdd, 0xaa));
+
+        assert_eq!(0xaabbccdd, RGBA::new(0xaabbccdd));
+        assert_eq!((0xaa, 0xbb, 0xcc, 0xdd), RGBA::decode(0xaabbccdd));
+        assert_eq!(0xaabbccdd, RGBA::encode(0xaa, 0xbb, 0xcc, 0xdd));
+
+        // For sanity checking; cargo test storage -- --nocapture
+        eprintln!("{:?}", InkuColor::<ZRGB>::new(0xff_facade));
+        eprintln!("{:?}", InkuColor::<RGBA>::new(0xfacade_ff));
     }
 }

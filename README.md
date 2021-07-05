@@ -1,6 +1,6 @@
 # inku
 
-An RGB color backed by a `u32`.
+An RGBA color backed by a `u32`.
 
 Example:
 

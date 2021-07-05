@@ -3,11 +3,11 @@ name = "inku"
 version = "0.1.0"
 authors = ["Odin Dutton <odindutton@gmail.com>"]
 edition = "2018"
-description = "An RGB color backed by a `u32` for simple color manipulation"
+description = "An RGBA color backed by a `u32` for simple color manipulation"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/twe4ked/inku"
 readme = "README.md"
-keywords = ["color", "u32", "rgb"]
+keywords = ["color", "u32", "rgb", "rgba"]
 categories = ["graphics"]
 
 [dev-dependencies]
