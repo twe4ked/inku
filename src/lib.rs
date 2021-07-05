@@ -78,7 +78,7 @@ pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
     }
     fn decode(color: u32) -> (u8, u8, u8, u8);
     fn encode(r: u8, g: u8, b: u8, a: u8) -> u32;
-    fn write_hex(w: &mut dyn Write, color: u32) -> std::fmt::Result {
+    fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
         write!(w, "{:#010x}", color)
     }
 }
@@ -123,7 +123,7 @@ impl Storage for ZRGB {
         (0 << 24) | (r << 16) | (g << 8) | b
     }
 
-    fn write_hex(w: &mut dyn Write, color: u32) -> std::fmt::Result {
+    fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
         // The high byte is ignored
         write!(w, "{:#08x}", color & 0xffffff)
     }
