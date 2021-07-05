@@ -345,12 +345,16 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
     let mut s = if delta == 0.0 {
         0.0
     } else {
-        delta / (1.0 - (2.0 * l - 1.0).abs())
+        // For rounding issues we need to ensure we stay below 1.0
+        (delta / (1.0 - (2.0 * l - 1.0).abs())).min(1.0)
     };
 
     // Multiply l and s by 100
     s *= 100.0;
     l *= 100.0;
+
+    debug_assert!(s <= 100.0);
+    debug_assert!(l <= 100.0);
 
     (h, s, l)
 }
@@ -474,6 +478,9 @@ mod tests {
         assert_float(29.999999999999996, h);
         assert_float(50.000000000000014, s);
         assert_float(39.215686274509810, l);
+
+        // Ensure saturation is within 0.0 and 100.0
+        Color::new(0xff2009).to_hsl();
     }
 
     #[test]
