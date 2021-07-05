@@ -64,7 +64,6 @@ impl Color {
     ///       ^^ green
     ///         ^^ blue
     /// ```
-    #[must_use]
     pub fn new(color: u32) -> Self {
         Self(color)
     }
