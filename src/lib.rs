@@ -474,11 +474,10 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Color as InkuColor, *};
+    use super::{Color, Storage, RGBA, ZRGB};
+    use std::fmt;
 
-    type Color = InkuColor<ZRGB>;
-
-    impl<T: Storage> fmt::Debug for InkuColor<T> {
+    impl<T: Storage> fmt::Debug for Color<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             use crossterm::style;
 
@@ -504,89 +503,98 @@ mod tests {
 
     #[test]
     fn lighten() {
-        let color = Color::new(0x000000);
+        let color = Color::<ZRGB>::new(0x000000);
 
         for percent in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].iter() {
             eprintln!("{:?}", color.lighten(*percent));
         }
 
-        assert_eq!(Color::new(0x191919), color.lighten(0.1));
-        assert_eq!(Color::new(0x7f7f7f), color.lighten(0.5));
-        assert_eq!(Color::new(0xffffff), color.lighten(1.0));
+        assert_eq!(Color::<ZRGB>::new(0x191919), color.lighten(0.1));
+        assert_eq!(Color::<ZRGB>::new(0x7f7f7f), color.lighten(0.5));
+        assert_eq!(Color::<ZRGB>::new(0xffffff), color.lighten(1.0));
 
-        assert_eq!(Color::new(0xffffff), Color::new(0xffffff).lighten(1.0));
+        assert_eq!(
+            Color::<ZRGB>::new(0xffffff),
+            Color::<ZRGB>::new(0xffffff).lighten(1.0)
+        );
     }
 
     #[test]
     fn darken() {
-        let color = Color::new(0xffffff);
+        let color = Color::<ZRGB>::new(0xffffff);
 
         for percent in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].iter() {
             eprintln!("{:?}", color.darken(*percent));
         }
 
-        assert_eq!(Color::new(0xe5e5e5), color.darken(0.1));
-        assert_eq!(Color::new(0x7f7f7f), color.darken(0.5));
-        assert_eq!(Color::new(0x000000), color.darken(1.0));
+        assert_eq!(Color::<ZRGB>::new(0xe5e5e5), color.darken(0.1));
+        assert_eq!(Color::<ZRGB>::new(0x7f7f7f), color.darken(0.5));
+        assert_eq!(Color::<ZRGB>::new(0x000000), color.darken(1.0));
 
-        assert_eq!(Color::new(0x000000), Color::new(0x000000).darken(1.0));
+        assert_eq!(
+            Color::<ZRGB>::new(0x000000),
+            Color::<ZRGB>::new(0x000000).darken(1.0)
+        );
     }
 
     #[test]
     fn saturate() {
-        let color = Color::new(0xe2e2e2);
+        let color = Color::<ZRGB>::new(0xe2e2e2);
 
         for percent in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].iter() {
             eprintln!("{:?}", color.saturate(*percent));
         }
 
-        assert_eq!(Color::new(0xe4dfdf), color.saturate(0.1));
-        assert_eq!(Color::new(0xf0d3d3), color.saturate(0.5));
-        assert_eq!(Color::new(0xffc4c4), color.saturate(1.0));
+        assert_eq!(Color::<ZRGB>::new(0xe4dfdf), color.saturate(0.1));
+        assert_eq!(Color::<ZRGB>::new(0xf0d3d3), color.saturate(0.5));
+        assert_eq!(Color::<ZRGB>::new(0xffc4c4), color.saturate(1.0));
     }
 
     #[test]
     fn desaturate() {
-        let color = Color::new(0xffc4c4);
+        let color = Color::<ZRGB>::new(0xffc4c4);
 
         for percent in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].iter() {
             eprintln!("{:?}", color.desaturate(*percent));
         }
 
-        assert_eq!(Color::new(0xfcc6c6), color.desaturate(0.1),);
-        assert_eq!(Color::new(0xf0d2d2), color.desaturate(0.5));
-        assert_eq!(Color::new(0xe1e1e1), color.desaturate(1.0));
+        assert_eq!(Color::<ZRGB>::new(0xfcc6c6), color.desaturate(0.1),);
+        assert_eq!(Color::<ZRGB>::new(0xf0d2d2), color.desaturate(0.5));
+        assert_eq!(Color::<ZRGB>::new(0xe1e1e1), color.desaturate(1.0));
     }
 
     #[test]
     fn rotate_hue() {
-        let color = Color::new(0xffc4c4);
+        let color = Color::<ZRGB>::new(0xffc4c4);
 
         for n in (0..360).into_iter().step_by(10) {
             eprintln!("{:?}", color.rotate_hue(n as f64));
         }
 
-        assert_eq!(color.rotate_hue(100.0), Color::new(0xd7fec3));
-        assert_eq!(color.rotate_hue(200.0), Color::new(0xc3ebfe));
-        assert_eq!(color.rotate_hue(300.0), Color::new(0xfec3fe));
+        assert_eq!(color.rotate_hue(100.0), Color::<ZRGB>::new(0xd7fec3));
+        assert_eq!(color.rotate_hue(200.0), Color::<ZRGB>::new(0xc3ebfe));
+        assert_eq!(color.rotate_hue(300.0), Color::<ZRGB>::new(0xfec3fe));
     }
 
     #[test]
     fn to_rgba() {
-        assert_eq!((0xbb, 0xcc, 0xdd, 0x00), Color::new(0xaabbccdd).to_rgba());
+        assert_eq!(
+            (0xbb, 0xcc, 0xdd, 0x00),
+            Color::<ZRGB>::new(0xaabbccdd).to_rgba()
+        );
     }
 
     #[test]
     fn from_rgba() {
         assert_eq!(
-            Color::new(0xaabbccdd),
-            Color::from_rgba(0xbb, 0xcc, 0xdd, 0x00)
+            Color::<ZRGB>::new(0xaabbccdd),
+            Color::<ZRGB>::from_rgba(0xbb, 0xcc, 0xdd, 0x00)
         );
     }
 
     #[test]
     fn to_hsla() {
-        let color = Color::new(0xff966432);
+        let color = Color::<ZRGB>::new(0xff966432);
         let (h, s, l, a) = color.to_hsla();
 
         let assert_float = |a: f64, b: f64| {
@@ -600,19 +608,19 @@ mod tests {
         assert_eq!(0, a);
 
         // Ensure saturation is within 0.0 and 100.0
-        Color::new(0xff2009).to_hsla();
+        Color::<ZRGB>::new(0xff2009).to_hsla();
     }
 
     #[test]
     fn brightness() {
-        assert_eq!(0.0, Color::new(0x000000).brightness());
-        assert_eq!(1.0, Color::new(0xffffff).brightness());
+        assert_eq!(0.0, Color::<ZRGB>::new(0x000000).brightness());
+        assert_eq!(1.0, Color::<ZRGB>::new(0xffffff).brightness());
     }
 
     #[test]
     fn is_light() {
-        let light = Color::new(0xffffff);
-        let dark = Color::new(0x000000);
+        let light = Color::<ZRGB>::new(0xffffff);
+        let dark = Color::<ZRGB>::new(0x000000);
 
         assert!(light.is_light());
         assert!(!dark.is_light());
@@ -629,7 +637,7 @@ mod tests {
         assert_eq!(0xaabbccdd, RGBA::encode(0xaa, 0xbb, 0xcc, 0xdd));
 
         // For sanity checking; cargo test storage -- --nocapture
-        eprintln!("{:?}", InkuColor::<ZRGB>::new(0xff_facade));
-        eprintln!("{:?}", InkuColor::<RGBA>::new(0xfacade_ff));
+        eprintln!("{:?}", Color::<ZRGB>::new(0xff_facade));
+        eprintln!("{:?}", Color::<RGBA>::new(0xfacade_ff));
     }
 }
