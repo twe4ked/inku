@@ -1,7 +1,7 @@
 #![allow(clippy::many_single_char_names)]
 #![warn(missing_docs)]
 
-//! An RGBA color backed by a `u32`.
+//! An RGBA [`Color`] backed by a `u32`.
 //!
 //! # Examples
 //!
@@ -107,7 +107,7 @@ fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
     (b1 << 24) | (b2 << 16) | (b3 << 8) | b4
 }
 
-/// ZRGB (0RGB)
+/// ZRGB (0RGB) storage format.
 ///
 /// ```text
 /// 0x00000000
@@ -140,7 +140,7 @@ impl Storage for ZRGB {
     }
 }
 
-/// RGBA
+/// RGBA storage format.
 ///
 /// ```text
 /// 0x00000000
