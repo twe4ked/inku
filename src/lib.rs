@@ -91,6 +91,22 @@ mod private {
     impl Sealed for super::RGBA {}
 }
 
+fn decode(color: u32) -> (u8, u8, u8, u8) {
+    let b1 = (color >> 24) & 0xff;
+    let b2 = (color >> 16) & 0xff;
+    let b3 = (color >> 8) & 0xff;
+    let b4 = color & 0xff;
+    (b1 as u8, b2 as u8, b3 as u8, b4 as u8)
+}
+
+fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
+    let b1 = b1 as u32;
+    let b2 = b2 as u32;
+    let b3 = b3 as u32;
+    let b4 = b4 as u32;
+    (b1 << 24) | (b2 << 16) | (b3 << 8) | b4
+}
+
 /// ZRGB (0RGB)
 ///
 /// ```text
@@ -109,18 +125,12 @@ impl Storage for ZRGB {
     }
 
     fn decode(color: u32) -> (u8, u8, u8, u8) {
-        let _ = (color >> 24) & 0xff;
-        let r = (color >> 16) & 0xff;
-        let g = (color >> 8) & 0xff;
-        let b = color & 0xff;
-        (r as u8, g as u8, b as u8, 0)
+        let (_, r, g, b) = decode(color);
+        (r, g, b, 0)
     }
 
     fn encode(r: u8, g: u8, b: u8, _a: u8) -> u32 {
-        let r = r as u32;
-        let g = g as u32;
-        let b = b as u32;
-        (0 << 24) | (r << 16) | (g << 8) | b
+        encode(0, r, g, b)
     }
 
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
@@ -143,19 +153,11 @@ pub struct RGBA;
 
 impl Storage for RGBA {
     fn decode(color: u32) -> (u8, u8, u8, u8) {
-        let r = (color >> 24) & 0xff;
-        let g = (color >> 16) & 0xff;
-        let b = (color >> 8) & 0xff;
-        let a = color & 0xff;
-        (r as u8, g as u8, b as u8, a as u8)
+        decode(color)
     }
 
     fn encode(r: u8, g: u8, b: u8, a: u8) -> u32 {
-        let r = r as u32;
-        let g = g as u32;
-        let b = b as u32;
-        let a = a as u32;
-        (r << 24) | (g << 16) | (b << 8) | a
+        encode(r, g, b, a)
     }
 }
 
