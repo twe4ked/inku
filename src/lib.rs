@@ -5,7 +5,7 @@
 //! Example:
 //!
 //! ```
-//! use inku::Color;
+//! type Color = inku::Color<inku::ZRGB>;
 //!
 //! let color = Color::new(0x000000);
 //! let new_color = color
@@ -23,7 +23,7 @@
 //! Consider the following:
 //!
 //! ```
-//! # use inku::Color;
+//! # type Color = inku::Color<inku::ZRGB>;
 //! let color = Color::new(0xfacade);
 //!
 //! // We convert the RGB values to HSL and desaturated the color
@@ -36,13 +36,15 @@
 //! ```
 
 use std::fmt;
+use std::fmt::Write;
+use std::marker::PhantomData;
 
 /// An RGB color backed by a `u32`.
 ///
 /// Example:
 ///
 /// ```
-/// use inku::Color;
+/// type Color = inku::Color<inku::ZRGB>;
 ///
 /// let color = Color::new(0x000000);
 /// // Lighten the color by 10%
@@ -50,22 +52,86 @@ use std::fmt;
 /// assert_eq!(lighter_color.to_u32(), 0x191919);
 /// ```
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
-pub struct Color(u32);
+pub struct Color<T: Storage>(u32, PhantomData<T>);
 
-impl Color {
+#[doc(hidden)]
+pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
+    fn new(color: u32) -> u32 {
+        color
+    }
+    fn decode(color: u32) -> (u8, u8, u8, u8);
+    fn encode(r: u8, g: u8, b: u8, a: u8) -> u32;
+    fn write_hex(w: &mut dyn Write, color: u32) -> std::fmt::Result {
+        write!(w, "{:#010x}", color)
+    }
+}
+
+mod private {
+    // https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed
+    pub trait Sealed {}
+
+    impl Sealed for super::ZRGB {}
+}
+
+/// ZRGB (0RGB)
+///
+/// ```text
+/// 0x00000000
+///   ^^ ignored (zeroed out)
+///     ^^ red
+///       ^^ green
+///         ^^ blue
+/// ```
+#[derive(PartialEq, Copy, Clone)]
+pub struct ZRGB;
+
+impl Storage for ZRGB {
+    fn new(color: u32) -> u32 {
+        color & 0xffffff
+    }
+
+    fn decode(color: u32) -> (u8, u8, u8, u8) {
+        let _ = (color >> 24) & 0xff;
+        let r = (color >> 16) & 0xff;
+        let g = (color >> 8) & 0xff;
+        let b = color & 0xff;
+        (r as u8, g as u8, b as u8, 0)
+    }
+
+    fn encode(r: u8, g: u8, b: u8, _a: u8) -> u32 {
+        let r = r as u32;
+        let g = g as u32;
+        let b = b as u32;
+        (0 << 24) | (r << 16) | (g << 8) | b
+    }
+
+    fn write_hex(w: &mut dyn Write, color: u32) -> std::fmt::Result {
+        // The high byte is ignored
+        write!(w, "{:#08x}", color & 0xffffff)
+    }
+}
+
+impl<T: Storage> Color<T> {
     /// Initializes a new `Color` from a `u32`.
     ///
-    /// The `u32` is treated as follows:
+    /// Example:
+    ///
+    /// ```
+    /// type Color = inku::Color<inku::ZRGB>;
+    /// let color = Color::new(0x000000);
+    /// ```
+    ///
+    /// Using `ZRGB`, the `u32` is treated as follows:
     ///
     /// ```text
     /// 0x00000000
-    ///   ^^ ignored
+    ///   ^^ ignored (zeroed out)
     ///     ^^ red
     ///       ^^ green
     ///         ^^ blue
     /// ```
     pub fn new(color: u32) -> Self {
-        Self(color)
+        Self(T::new(color), PhantomData)
     }
 
     /// Lightens the color by translating to HSL color space then adjusting the lightness value.
@@ -78,12 +144,12 @@ impl Color {
         assert_percent(percent);
 
         // First convert to HSL
-        let (h, s, mut l) = self.to_hsl();
+        let (h, s, mut l, a) = self.to_hsla();
 
         // Increase the lightness and ensure we don't go over 100.0
         l = (l + percent * 100.0).min(100.0);
 
-        Color::from_hsl(h, s, l)
+        Color::from_hsla(h, s, l, a)
     }
 
     /// Darkens the color by translating to HSL color space then adjusting the lightness value.
@@ -96,12 +162,12 @@ impl Color {
         assert_percent(percent);
 
         // First convert to HSL
-        let (h, s, mut l) = self.to_hsl();
+        let (h, s, mut l, a) = self.to_hsla();
 
         // Decrease the lightness and ensure we don't go under 0.0
         l = (l - percent * 100.0).max(0.0);
 
-        Color::from_hsl(h, s, l)
+        Color::from_hsla(h, s, l, a)
     }
 
     /// Increases saturation of the color by translating to HSL color space then adjusting the
@@ -115,12 +181,12 @@ impl Color {
         assert_percent(percent);
 
         // First convert to HSL
-        let (h, mut s, l) = self.to_hsl();
+        let (h, mut s, l, a) = self.to_hsla();
 
         // Increase the saturation and ensure we don't go over 100.0
         s = (s + percent * 100.0).min(100.0);
 
-        Color::from_hsl(h, s, l)
+        Color::from_hsla(h, s, l, a)
     }
 
     /// Decreases saturation of the color by translating to HSL color space then adjusting the
@@ -134,12 +200,12 @@ impl Color {
         assert_percent(percent);
 
         // First convert to HSL
-        let (h, mut s, l) = self.to_hsl();
+        let (h, mut s, l, a) = self.to_hsla();
 
         // Decrease the saturation and ensure we don't go under 0.0
         s = (s - percent * 100.0).max(0.0);
 
-        Color::from_hsl(h, s, l)
+        Color::from_hsla(h, s, l, a)
     }
 
     /// Rotate the hue by translating to HSL color space then adjusting the hue value. Takes a
@@ -153,12 +219,12 @@ impl Color {
         assert!(amount >= 0.0, "amount must be greater than 0.0");
 
         // First convert to HSL
-        let (mut h, s, l) = self.to_hsl();
+        let (mut h, s, l, a) = self.to_hsla();
 
         // Add the amount and ensure the value is a positive number between 0.0 and 360.0
         h = ((h + amount) % 360.0 + 360.0) % 360.0;
 
-        Color::from_hsl(h, s, l)
+        Color::from_hsla(h, s, l, a)
     }
 
     /// Returns the underlying u32.
@@ -169,7 +235,7 @@ impl Color {
     /// The [percieved brightness](https://www.w3.org/TR/AERT#color-contrast) of the color (a
     /// number between `0.0` and `1.0`).
     pub fn brightness(self) -> f64 {
-        let (r, g, b) = self.to_rgb();
+        let (r, g, b, _a) = self.to_rgba();
         let r = r as f64 / 255.0;
         let g = g as f64 / 255.0;
         let b = b as f64 / 255.0;
@@ -182,60 +248,59 @@ impl Color {
         self.brightness() > 0.5
     }
 
-    fn to_rgb(self) -> (u8, u8, u8) {
-        let r = (self.0 >> 16) & 0xff;
-        let g = (self.0 >> 8) & 0xff;
-        let b = self.0 & 0xff;
-        (r as u8, g as u8, b as u8)
+    fn to_rgba(self) -> (u8, u8, u8, u8) {
+        let (r, g, b, a) = T::decode(self.0);
+        (r, g, b, a)
     }
 
-    fn from_rgb(r: u8, g: u8, b: u8) -> Self {
-        let r = r as u32;
-        let g = g as u32;
-        let b = b as u32;
-        Self((r << 16) | (g << 8) | b)
+    fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self::new(T::encode(r, g, b, a))
     }
 
-    fn to_hsl(self) -> (f64, f64, f64) {
-        let (r, g, b) = self.to_rgb();
-        rgb_to_hsl(r, g, b)
+    fn to_hsla(self) -> (f64, f64, f64, u8) {
+        let (r, g, b, a) = self.to_rgba();
+        let (h, s, l) = rgb_to_hsl(r, g, b);
+        (h, s, l, a)
     }
 
-    fn from_hsl(h: f64, s: f64, l: f64) -> Self {
+    fn from_hsla(h: f64, s: f64, l: f64, a: u8) -> Self {
         let (r, g, b) = hsl_to_rgb(h, s, l);
-        Self::from_rgb(r as u8, g as u8, b as u8)
+        Self::from_rgba(r as u8, g as u8, b as u8, a)
     }
 }
 
 #[cfg(not(test))]
-impl fmt::Debug for Color {
+impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Color({:#08x})", &self.0 & 0xffffff)
+        write!(f, "Color<{}>(", std::any::type_name::<T>())?;
+        T::write_hex(f, self.0)?;
+        write!(f, ")")
     }
 }
 
-impl From<u32> for Color {
+impl<T: Storage> From<u32> for Color<T> {
     fn from(color: u32) -> Self {
         Self::new(color)
     }
 }
 
-impl From<(u8, u8, u8)> for Color {
+impl<T: Storage> From<(u8, u8, u8)> for Color<T> {
     fn from(rgb: (u8, u8, u8)) -> Self {
         let (r, g, b) = rgb;
-        Self::from_rgb(r, g, b)
+        Self::from_rgba(r, g, b, 0)
     }
 }
 
-impl From<Color> for u32 {
-    fn from(color: Color) -> u32 {
+impl<T: Storage> From<Color<T>> for u32 {
+    fn from(color: Color<T>) -> u32 {
         color.to_u32()
     }
 }
 
-impl From<Color> for (u8, u8, u8) {
-    fn from(color: Color) -> (u8, u8, u8) {
-        color.to_rgb()
+impl<T: Storage> From<Color<T>> for (u8, u8, u8) {
+    fn from(color: Color<T>) -> (u8, u8, u8) {
+        let (r, g, b, _a) = color.to_rgba();
+        (r, g, b)
     }
 }
 
@@ -361,9 +426,11 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{Color as InkuColor, *};
 
-    impl fmt::Debug for Color {
+    type Color = InkuColor<ZRGB>;
+
+    impl<T: Storage> fmt::Debug for InkuColor<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             use crossterm::style;
 
@@ -372,17 +439,18 @@ mod tests {
             } else {
                 style::Color::White
             };
-            let (r, g, b) = self.to_rgb();
+            let (r, g, b, _a) = self.to_rgba();
             let bg = style::Color::Rgb { r, g, b };
 
             write!(
                 f,
-                "Color({}{}{:#08x}{})",
+                "Color<{}>({}{}",
+                std::any::type_name::<T>(),
                 style::SetForegroundColor(fg),
                 style::SetBackgroundColor(bg),
-                self.to_u32() & 0xffffff,
-                style::ResetColor,
-            )
+            )?;
+            T::write_hex(f, self.0)?;
+            write!(f, "{})", style::ResetColor)
         }
     }
 
@@ -456,19 +524,22 @@ mod tests {
     }
 
     #[test]
-    fn to_rgb() {
-        assert_eq!((0xaa, 0xbb, 0xcc), Color::new(0xaabbcc).to_rgb());
+    fn to_rgba() {
+        assert_eq!((0xbb, 0xcc, 0xdd, 0x00), Color::new(0xaabbccdd).to_rgba());
     }
 
     #[test]
-    fn from_rgb() {
-        assert_eq!(Color::new(0xaabbcc), Color::from_rgb(0xaa, 0xbb, 0xcc));
+    fn from_rgba() {
+        assert_eq!(
+            Color::new(0xaabbccdd),
+            Color::from_rgba(0xbb, 0xcc, 0xdd, 0x00)
+        );
     }
 
     #[test]
-    fn to_hsl() {
-        let color = Color::new(0x966432);
-        let (h, s, l) = color.to_hsl();
+    fn to_hsla() {
+        let color = Color::new(0xff966432);
+        let (h, s, l, a) = color.to_hsla();
 
         let assert_float = |a: f64, b: f64| {
             let error_margin = std::f64::EPSILON;
@@ -478,9 +549,10 @@ mod tests {
         assert_float(29.999999999999996, h);
         assert_float(50.000000000000014, s);
         assert_float(39.215686274509810, l);
+        assert_eq!(0, a);
 
         // Ensure saturation is within 0.0 and 100.0
-        Color::new(0xff2009).to_hsl();
+        Color::new(0xff2009).to_hsla();
     }
 
     #[test]
@@ -496,5 +568,12 @@ mod tests {
 
         assert!(light.is_light());
         assert!(!dark.is_light());
+    }
+
+    #[test]
+    fn storage() {
+        assert_eq!(0x00bbccdd, ZRGB::new(0xaabbccdd));
+        assert_eq!((0xbb, 0xcc, 0xdd, 0x00), ZRGB::decode(0xaabbccdd));
+        assert_eq!(0x00bbccdd, ZRGB::encode(0xbb, 0xcc, 0xdd, 0xaa));
     }
 }

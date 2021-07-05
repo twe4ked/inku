@@ -5,7 +5,7 @@ An RGB color backed by a `u32`.
 Example:
 
 ```rust
-use inku::Color;
+type Color = inku::Color<inku::ZRGB>;
 
 let color = Color::new(0x000000);
 let new_color = color
