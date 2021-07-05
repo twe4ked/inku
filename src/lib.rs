@@ -73,7 +73,7 @@ pub struct Color<T: Storage>(u32, PhantomData<T>);
 
 #[doc(hidden)]
 pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
-    fn new(color: u32) -> u32 {
+    fn init(color: u32) -> u32 {
         color
     }
     fn decode(color: u32) -> (u8, u8, u8, u8);
@@ -121,7 +121,7 @@ fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
 pub struct ZRGB;
 
 impl Storage for ZRGB {
-    fn new(color: u32) -> u32 {
+    fn init(color: u32) -> u32 {
         color & 0xffffff
     }
 
@@ -183,7 +183,7 @@ impl<T: Storage> Color<T> {
     ///         ^^ blue
     /// ```
     pub fn new(color: u32) -> Self {
-        Self(T::new(color), PhantomData)
+        Self(T::init(color), PhantomData)
     }
 
     /// Lightens the color by translating to HSL color space then adjusting the lightness value.
@@ -632,11 +632,11 @@ mod tests {
 
     #[test]
     fn storage() {
-        assert_eq!(0x00bbccdd, ZRGB::new(0xaabbccdd));
+        assert_eq!(0x00bbccdd, ZRGB::init(0xaabbccdd));
         assert_eq!((0xbb, 0xcc, 0xdd, 0x00), ZRGB::decode(0xaabbccdd));
         assert_eq!(0x00bbccdd, ZRGB::encode(0xbb, 0xcc, 0xdd, 0xaa));
 
-        assert_eq!(0xaabbccdd, RGBA::new(0xaabbccdd));
+        assert_eq!(0xaabbccdd, RGBA::init(0xaabbccdd));
         assert_eq!((0xaa, 0xbb, 0xcc, 0xdd), RGBA::decode(0xaabbccdd));
         assert_eq!(0xaabbccdd, RGBA::encode(0xaa, 0xbb, 0xcc, 0xdd));
 
