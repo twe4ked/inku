@@ -8,7 +8,9 @@ fuzz_target!(|input: (u32, f64, f64)| {
     h = if h.is_nan() { 0.0 } else { h.clamp(0.0, 360.0) };
     x = if x.is_nan() { 0.0 } else { x.clamp(0.0, 1.0) };
 
-    let _ = inku::Color::new(c)
+    type RGBA = inku::Color<inku::RGBA>;
+
+    let _ = RGBA::new(c)
         .rotate_hue(h)
         .lighten(x)
         .darken(x)
