@@ -362,7 +362,7 @@ impl<T: Storage> Color<T> {
     }
 }
 
-#[cfg(not(test))]
+#[cfg(not(any(test, feature = "color_debug")))]
 impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let storage = format!("{}", std::any::type_name::<T>())
@@ -373,6 +373,31 @@ impl<T: Storage> fmt::Debug for Color<T> {
         write!(f, "Color<{}>(", storage)?;
         T::write_hex(f, self.0)?;
         write!(f, ")")
+    }
+}
+
+#[cfg(any(test, feature = "color_debug"))]
+impl<T: Storage> fmt::Debug for Color<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use crossterm::style;
+
+        let fg = style::SetForegroundColor(if self.is_light() {
+            style::Color::Black
+        } else {
+            style::Color::White
+        });
+        let (r, g, b, _a) = self.to_rgba();
+        let bg = style::SetBackgroundColor(style::Color::Rgb { r, g, b });
+
+        let storage = format!("{}", std::any::type_name::<T>())
+            .split("::")
+            .last()
+            .expect("no type name")
+            .to_owned();
+
+        write!(f, "Color<{}>({}{}", storage, fg, bg)?;
+        T::write_hex(f, self.0)?;
+        write!(f, "{})", style::ResetColor)
     }
 }
 
@@ -525,31 +550,6 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
 #[cfg(test)]
 mod tests {
     use super::{Color, Storage, RGBA, ZRGB};
-    use std::fmt;
-
-    impl<T: Storage> fmt::Debug for Color<T> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            use crossterm::style;
-
-            let fg = style::SetForegroundColor(if self.is_light() {
-                style::Color::Black
-            } else {
-                style::Color::White
-            });
-            let (r, g, b, _a) = self.to_rgba();
-            let bg = style::SetBackgroundColor(style::Color::Rgb { r, g, b });
-
-            let storage = format!("{}", std::any::type_name::<T>())
-                .split("::")
-                .last()
-                .expect("no type name")
-                .to_owned();
-
-            write!(f, "Color<{}>({}{}", storage, fg, bg)?;
-            T::write_hex(f, self.0)?;
-            write!(f, "{})", style::ResetColor)
-        }
-    }
 
     #[test]
     fn lighten() {
