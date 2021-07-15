@@ -15,6 +15,9 @@ let new_color = color
     .saturate(0.3);
 
 assert_eq!(new_color.to_u32(), 0x201111ff);
+
+// 4 bytes
+assert_eq!(4, std::mem::size_of::<RGBA>());
 ```
 
 ## Storage Formats

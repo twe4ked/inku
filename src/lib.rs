@@ -16,6 +16,9 @@
 //!     .saturate(0.3);
 //!
 //! assert_eq!(new_color.to_u32(), 0x201111ff);
+//!
+//! // 4 bytes
+//! assert_eq!(4, std::mem::size_of::<RGBA>());
 //! ```
 //!
 //! # Storage Formats
@@ -67,6 +70,9 @@ use std::marker::PhantomData;
 /// ```
 /// type RGBA = inku::Color<inku::RGBA>;
 /// assert_eq!(RGBA::new(0xfacadeff).to_u32(), 0xfacadeff);
+///
+/// // 4 bytes
+/// assert_eq!(4, std::mem::size_of::<RGBA>());
 /// ```
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
 pub struct Color<T: Storage>(u32, PhantomData<T>);
