@@ -497,10 +497,16 @@ mod tests {
             let (r, g, b, _a) = self.to_rgba();
             let bg = style::Color::Rgb { r, g, b };
 
+            let storage = format!("{}", std::any::type_name::<T>())
+                .split("::")
+                .last()
+                .expect("no type name")
+                .to_owned();
+
             write!(
                 f,
                 "Color<{}>({}{}",
-                std::any::type_name::<T>(),
+                storage,
                 style::SetForegroundColor(fg),
                 style::SetBackgroundColor(bg),
             )?;
