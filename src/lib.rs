@@ -331,7 +331,7 @@ impl<T: Storage> Color<T> {
     ///     0x00010203
     /// );
     /// ```
-    pub fn map(&self, f: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8)) -> Self {
+    pub fn map(&self, f: fn(r: u8, g: u8, b: u8, a: u8) -> (u8, u8, u8, u8)) -> Self {
         let (r, g, b, a) = self.to_rgba();
         let (r, g, b, a) = f(r, g, b, a);
         Self::from_rgba(r, g, b, a)
