@@ -300,6 +300,23 @@ impl<T: Storage> Color<T> {
         self.brightness() > 0.5
     }
 
+    /// Modify the individual channels.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let color = inku::Color::<inku::RGBA>::new(0x00000011);
+    /// assert_eq!(
+    ///     color.map(|r, g, b, a| (r, g, b, a + 0x22)).to_u32(),
+    ///     0x00000033
+    /// );
+    /// ```
+    pub fn map(&self, f: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8)) -> Self {
+        let (r, g, b, a) = self.to_rgba();
+        let (r, g, b, a) = f(r, g, b, a);
+        Self::from_rgba(r, g, b, a)
+    }
+
     fn to_rgba(self) -> (u8, u8, u8, u8) {
         let (r, g, b, a) = T::decode(self.0);
         (r, g, b, a)
@@ -637,6 +654,25 @@ mod tests {
 
         assert!(light.is_light());
         assert!(!dark.is_light());
+    }
+
+    #[test]
+    fn map() {
+        let color = Color::<ZRGB>::new(0x00000000);
+        assert_eq!(
+            color
+                .map(|r, g, b, a| (r + 1, g + 2, b + 3, a + 4))
+                .to_u32(),
+            0x00010203
+        );
+
+        let color = Color::<RGBA>::new(0x00000000);
+        assert_eq!(
+            color
+                .map(|r, g, b, a| (r + 1, g + 2, b + 3, a + 4))
+                .to_u32(),
+            0x01020304
+        );
     }
 
     #[test]
