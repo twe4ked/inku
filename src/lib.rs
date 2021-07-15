@@ -309,6 +309,10 @@ impl<T: Storage> Color<T> {
         Self::new(T::encode(r, g, b, a))
     }
 
+    // NOTE: These {to,from}_hsla functions are private because if you're already dealing with
+    // colors in HSLA you're probably better off keeping your colors in HSLA so you don't lose
+    // fidelity.
+
     fn to_hsla(self) -> (f64, f64, f64, u8) {
         let (r, g, b, a) = self.to_rgba();
         let (h, s, l) = rgb_to_hsl(r, g, b);
