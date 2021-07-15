@@ -316,6 +316,20 @@ impl<T: Storage> Color<T> {
     ///     color.map(|r, g, b, a| (r, g, b, a + 0x22)).to_u32(),
     ///     0x00000033
     /// );
+    ///
+    /// let color = inku::Color::<inku::ZRGB>::new(0x11223344);
+    /// assert_eq!(
+    ///     color
+    ///         .map(|r, g, b, a| {
+    ///             assert_eq!(r, 0x22);
+    ///             assert_eq!(g, 0x33);
+    ///             assert_eq!(b, 0x44);
+    ///             assert_eq!(a, 0x00);
+    ///             (1, 2, 3, 4)
+    ///         })
+    ///         .to_u32(),
+    ///     0x00010203
+    /// );
     /// ```
     pub fn map(&self, f: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8)) -> Self {
         let (r, g, b, a) = self.to_rgba();
