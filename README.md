@@ -1,6 +1,6 @@
 # inku
 
-An RGBA color backed by a `u32`.
+An RGBA [`Color`] backed by a `u32`.
 
 ## Examples
 
@@ -30,7 +30,7 @@ type ZRGB = inku::Color<inku::ZRGB>;
 
 assert_eq!(RGBA::new(0xfacadeff).to_u32(), 0xfacadeff);
 
-// NOTE: The high two bytes are zeroed out
+// NOTE: The high byte is zeroed out
 assert_eq!(ZRGB::new(0xfffacade).to_u32(), 0x00facade);
 ```
 
