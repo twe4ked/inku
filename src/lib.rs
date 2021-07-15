@@ -306,7 +306,7 @@ impl<T: Storage> Color<T> {
         self.brightness() > 0.5
     }
 
-    /// Modify the individual channels.
+    /// Maps `(r1, g1, b1, a1)` to `(r2, g2, b2, a2)` by applying a function to the channels.
     ///
     /// # Examples
     ///
