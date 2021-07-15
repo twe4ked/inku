@@ -489,13 +489,13 @@ mod tests {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             use crossterm::style;
 
-            let fg = if self.is_light() {
+            let fg = style::SetForegroundColor(if self.is_light() {
                 style::Color::Black
             } else {
                 style::Color::White
-            };
+            });
             let (r, g, b, _a) = self.to_rgba();
-            let bg = style::Color::Rgb { r, g, b };
+            let bg = style::SetBackgroundColor(style::Color::Rgb { r, g, b });
 
             let storage = format!("{}", std::any::type_name::<T>())
                 .split("::")
@@ -503,13 +503,7 @@ mod tests {
                 .expect("no type name")
                 .to_owned();
 
-            write!(
-                f,
-                "Color<{}>({}{}",
-                storage,
-                style::SetForegroundColor(fg),
-                style::SetBackgroundColor(bg),
-            )?;
+            write!(f, "Color<{}>({}{}", storage, fg, bg)?;
             T::write_hex(f, self.0)?;
             write!(f, "{})", style::ResetColor)
         }
