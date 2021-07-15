@@ -328,7 +328,12 @@ impl<T: Storage> Color<T> {
 #[cfg(not(test))]
 impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Color<{}>(", std::any::type_name::<T>())?;
+        let storage = format!("{}", std::any::type_name::<T>())
+            .split("::")
+            .last()
+            .expect("no type name")
+            .to_owned();
+        write!(f, "Color<{}>(", storage)?;
         T::write_hex(f, self.0)?;
         write!(f, ")")
     }
