@@ -216,7 +216,7 @@ impl<T: Storage> Color<T> {
         // First convert to HSL
         let (h, s, mut l, a) = self.to_hsla();
 
-        // Decrease the lightness and ensure we don't go under 0.0
+        // Decrease the lightness and ensure we don't go below 0.0
         l = (l - percent * 100.0).max(0.0);
 
         Color::from_hsla(h, s, l, a)
@@ -254,7 +254,7 @@ impl<T: Storage> Color<T> {
         // First convert to HSL
         let (h, mut s, l, a) = self.to_hsla();
 
-        // Decrease the saturation and ensure we don't go under 0.0
+        // Decrease the saturation and ensure we don't go below 0.0
         s = (s - percent * 100.0).max(0.0);
 
         Color::from_hsla(h, s, l, a)
