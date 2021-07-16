@@ -472,11 +472,13 @@ fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> (u8, u8, u8, u8) {
         unreachable!();
     };
 
-    // To get the final RGBA value, we add m to each channel, multiply it by 255
+    // To get the final RGB value, we add m to each channel, multiply it by 255.0
     r = (r + m) * 255.0;
     g = (g + m) * 255.0;
     b = (b + m) * 255.0;
-    a = a * 255.0;
+
+    // Alpha is simply multiplied by 255.0
+    a *= 255.0;
 
     (r as u8, g as u8, b as u8, a as u8)
 }
