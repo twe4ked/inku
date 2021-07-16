@@ -99,7 +99,7 @@ pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
     fn from_rgba(color: [u8; 4]) -> u32;
 
     /// Write out the `u32` for debugging.
-    fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
+    fn write_debug(w: &mut dyn Write, color: u32) -> fmt::Result {
         write!(w, "{:#010x}", color)
     }
 }
@@ -140,7 +140,7 @@ impl Storage for ZRGB {
         u32::from_be_bytes([0, r, g, b])
     }
 
-    fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
+    fn write_debug(w: &mut dyn Write, color: u32) -> fmt::Result {
         // The high byte is ignored
         write!(w, "{:#08x}", color & 0xffffff)
     }
@@ -377,7 +377,7 @@ impl<T: Storage> fmt::Debug for Color<T> {
             write!(f, "{}{}", fg, bg)?;
         }
 
-        T::write_hex(f, self.0)?;
+        T::write_debug(f, self.0)?;
 
         #[cfg(any(test, feature = "crossterm"))]
         write!(f, "{}", crossterm::style::ResetColor)?;
