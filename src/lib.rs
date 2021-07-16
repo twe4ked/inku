@@ -353,15 +353,15 @@ impl<T: Storage> Color<T> {
     // colors in HSLA you're probably better off keeping your colors in HSLA so you don't lose
     // fidelity.
 
-    fn to_hsla(self) -> (f64, f64, f64, u8) {
+    fn to_hsla(self) -> (f64, f64, f64, f64) {
         let (r, g, b, a) = self.to_rgba();
-        let (h, s, l) = rgb_to_hsl(r, g, b);
+        let (h, s, l, a) = rgba_to_hsla(r, g, b, a);
         (h, s, l, a)
     }
 
-    fn from_hsla(h: f64, s: f64, l: f64, a: u8) -> Self {
-        let (r, g, b) = hsl_to_rgb(h, s, l);
-        Self::from_rgba(r as u8, g as u8, b as u8, a)
+    fn from_hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
+        let (r, g, b, a) = hsla_to_rgba(h, s, l, a);
+        Self::from_rgba(r as u8, g as u8, b as u8, a as u8)
     }
 }
 
@@ -439,7 +439,7 @@ fn assert_percent(percent: f64) {
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#hsl-to-rgb
-fn hsl_to_rgb(h: f64, mut s: f64, mut l: f64) -> (u8, u8, u8) {
+fn hsla_to_rgba(h: f64, mut s: f64, mut l: f64, mut a: f64) -> (u8, u8, u8, u8) {
     debug_assert!(
         (0.0..=360.0).contains(&h),
         "h must be between 0.0 and 360.0"
@@ -453,10 +453,11 @@ fn hsl_to_rgb(h: f64, mut s: f64, mut l: f64) -> (u8, u8, u8) {
         "l must be between 0.0 and 100.0"
     );
 
-    // Since we'll use a range of 0.0-100.0 for the saturation and lightness, the first step is to
-    // divide them by 100.0 to values between 0.0 and 1.0.
+    // Since we'll use a range of 0.0-100.0 for the saturation, lightness, and alpha, the first
+    // step is to divide them by 100.0 to values between 0.0 and 1.0.
     s /= 100.0;
     l /= 100.0;
+    a /= 100.0;
 
     // Next, we find chroma (c), which is color intensity
     let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
@@ -485,20 +486,22 @@ fn hsl_to_rgb(h: f64, mut s: f64, mut l: f64) -> (u8, u8, u8) {
         unreachable!();
     };
 
-    // To get the final RGB value, we add m to each channel, multiply it by 255
+    // To get the final RGBA value, we add m to each channel, multiply it by 255
     r = (r + m) * 255.0;
     g = (g + m) * 255.0;
     b = (b + m) * 255.0;
+    a = a * 255.0;
 
-    (r as u8, g as u8, b as u8)
+    (r as u8, g as u8, b as u8, a as u8)
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#rgb-to-hsl
-fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
-    // First, we must divide the red, green, and blue by 255 to use values between 0.0 and 1.0.
+fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> (f64, f64, f64, f64) {
+    // First, we must divide the red, green, and blue, and alpha by 255 to use values between 0.0 and 1.0.
     let r = r as f64 / 255.0;
     let g = g as f64 / 255.0;
     let b = b as f64 / 255.0;
+    let mut a = a as f64 / 255.0;
 
     // Then we find the minimum and maximum of those values (c_min and c_max) as well as the
     // difference between them (delta).
@@ -540,14 +543,15 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
         (delta / (1.0 - (2.0 * l - 1.0).abs())).min(1.0)
     };
 
-    // Multiply l and s by 100
+    // Multiply l, s, and a by 100
     s *= 100.0;
     l *= 100.0;
+    a *= 100.0;
 
     debug_assert!(s <= 100.0);
     debug_assert!(l <= 100.0);
 
-    (h, s, l)
+    (h, s, l, a)
 }
 
 #[cfg(test)]
@@ -647,7 +651,7 @@ mod tests {
 
     #[test]
     fn to_hsla() {
-        let color = Color::<ZRGB>::new(0xff966432);
+        let color = Color::<RGBA>::new(0x96643233);
         let (h, s, l, a) = color.to_hsla();
 
         let assert_float = |a: f64, b: f64| {
@@ -658,7 +662,7 @@ mod tests {
         assert_float(29.999999999999996, h);
         assert_float(50.000000000000014, s);
         assert_float(39.215686274509810, l);
-        assert_eq!(0, a);
+        assert_float(20.0, a);
 
         // Ensure saturation is within 0.0 and 100.0
         Color::<ZRGB>::new(0xff2009).to_hsla();
@@ -714,5 +718,16 @@ mod tests {
         // For sanity checking; cargo test storage -- --nocapture
         eprintln!("{:?}", Color::<ZRGB>::new(0xff_facade));
         eprintln!("{:?}", Color::<RGBA>::new(0xfacade_ff));
+    }
+
+    #[test]
+    fn test_rgba_to_hsla() {
+        let (h, s, l, a) = rgba_to_hsla(1, 2, 3, 4);
+        let (r, g, b, a) = hsla_to_rgba(h, s, l, a);
+
+        assert_eq!(r, 1);
+        assert_eq!(g, 2);
+        assert_eq!(b, 3);
+        assert_eq!(a, 4);
     }
 }
