@@ -55,4 +55,9 @@ let resaturated_color = desaturated_color.saturate(0.1);
 assert_eq!(0xf9c9ddff, resaturated_color.to_u32());
 ```
 
+## Crossterm feature
+
+The `crossterm` feature improves the `Debug` impl by printing the color using the `crossterm`
+crate.
+
 License: MIT OR Apache-2.0
