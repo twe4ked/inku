@@ -256,13 +256,8 @@ impl<T: Storage> Color<T> {
 
     /// Rotate the hue by translating to HSL color space then adjusting the hue value. Takes a
     /// value between `0.0` and `360.0`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `amount` is less than `0.0`
     #[must_use]
     pub fn rotate_hue(self, amount: f64) -> Self {
-        assert!(amount >= 0.0, "amount must be greater than 0.0");
         self.map_hsla(|mut h, s, l, a| {
             // Add the amount and ensure the value is a positive number between 0.0 and 360.0
             h = ((h + amount) % 360.0 + 360.0) % 360.0;
