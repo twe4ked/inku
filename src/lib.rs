@@ -469,7 +469,7 @@ fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> (u8, u8, u8, u8) {
     } else if (300.0..360.0).contains(&h) {
         (c, 0.0, x)
     } else {
-        unreachable!();
+        panic!("hue is over 360.0");
     };
 
     // To get the final RGB value, we add m to each channel, multiply it by 255.0
