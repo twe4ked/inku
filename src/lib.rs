@@ -87,8 +87,8 @@ pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
     fn init(color: u32) -> u32 {
         color
     }
-    fn decode(color: u32) -> [u8; 4];
-    fn encode(color: [u8; 4]) -> u32;
+    fn to_rgba(color: u32) -> [u8; 4];
+    fn from_rgba(color: [u8; 4]) -> u32;
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
         write!(w, "{:#010x}", color)
     }
@@ -120,12 +120,12 @@ impl Storage for ZRGB {
         color & 0xffffff
     }
 
-    fn decode(color: u32) -> [u8; 4] {
+    fn to_rgba(color: u32) -> [u8; 4] {
         let [_, r, g, b] = color.to_be_bytes();
         [r, g, b, 0]
     }
 
-    fn encode(color: [u8; 4]) -> u32 {
+    fn from_rgba(color: [u8; 4]) -> u32 {
         let [r, g, b, _] = color;
         u32::from_be_bytes([0, r, g, b])
     }
@@ -150,11 +150,11 @@ impl Storage for ZRGB {
 pub struct RGBA;
 
 impl Storage for RGBA {
-    fn decode(color: u32) -> [u8; 4] {
+    fn to_rgba(color: u32) -> [u8; 4] {
         color.to_be_bytes()
     }
 
-    fn encode(color: [u8; 4]) -> u32 {
+    fn from_rgba(color: [u8; 4]) -> u32 {
         u32::from_be_bytes(color)
     }
 }
@@ -320,11 +320,11 @@ impl<T: Storage> Color<T> {
     }
 
     fn to_rgba(self) -> [u8; 4] {
-        T::decode(self.0)
+        T::to_rgba(self.0)
     }
 
     fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self::new(T::encode([r, g, b, a]))
+        Self::new(T::from_rgba([r, g, b, a]))
     }
 
     // NOTE: These {to,from}_hsla functions are private because if you're already dealing with
@@ -682,12 +682,12 @@ mod tests {
     #[test]
     fn storage() {
         assert_eq!(0x00bbccdd, ZRGB::init(0xaabbccdd));
-        assert_eq!([0xbb, 0xcc, 0xdd, 0x00], ZRGB::decode(0xaabbccdd));
-        assert_eq!(0x00bbccdd, ZRGB::encode([0xbb, 0xcc, 0xdd, 0xaa]));
+        assert_eq!([0xbb, 0xcc, 0xdd, 0x00], ZRGB::to_rgba(0xaabbccdd));
+        assert_eq!(0x00bbccdd, ZRGB::from_rgba([0xbb, 0xcc, 0xdd, 0xaa]));
 
         assert_eq!(0xaabbccdd, RGBA::init(0xaabbccdd));
-        assert_eq!([0xaa, 0xbb, 0xcc, 0xdd], RGBA::decode(0xaabbccdd));
-        assert_eq!(0xaabbccdd, RGBA::encode([0xaa, 0xbb, 0xcc, 0xdd]));
+        assert_eq!([0xaa, 0xbb, 0xcc, 0xdd], RGBA::to_rgba(0xaabbccdd));
+        assert_eq!(0xaabbccdd, RGBA::from_rgba([0xaa, 0xbb, 0xcc, 0xdd]));
 
         // For sanity checking; cargo test storage -- --nocapture
         eprintln!("{:?}", Color::<ZRGB>::new(0xff_facade));
