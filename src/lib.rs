@@ -201,8 +201,8 @@ impl<T: Storage> Color<T> {
     pub fn lighten(self, percent: f64) -> Self {
         assert_percent(percent);
         self.map_hsla(|h, s, mut l, a| {
-            // Increase the lightness and ensure we don't go over 100.0
-            l = (l + percent * 100.0).min(100.0);
+            // Increase the lightness and ensure we don't go over 1.0
+            l = (l + percent).min(1.0);
             (h, s, l, a)
         })
     }
@@ -217,7 +217,7 @@ impl<T: Storage> Color<T> {
         assert_percent(percent);
         self.map_hsla(|h, s, mut l, a| {
             // Decrease the lightness and ensure we don't go below 0.0
-            l = (l - percent * 100.0).max(0.0);
+            l = (l - percent).max(0.0);
             (h, s, l, a)
         })
     }
@@ -232,8 +232,8 @@ impl<T: Storage> Color<T> {
     pub fn saturate(self, percent: f64) -> Self {
         assert_percent(percent);
         self.map_hsla(|h, mut s, l, a| {
-            // Increase the saturation and ensure we don't go over 100.0
-            s = (s + percent * 100.0).min(100.0);
+            // Increase the saturation and ensure we don't go over 1.0
+            s = (s + percent).min(1.0);
             (h, s, l, a)
         })
     }
@@ -249,7 +249,7 @@ impl<T: Storage> Color<T> {
         assert_percent(percent);
         self.map_hsla(|h, mut s, l, a| {
             // Decrease the saturation and ensure we don't go below 0.0
-            s = (s - percent * 100.0).max(0.0);
+            s = (s - percent).max(0.0);
             (h, s, l, a)
         })
     }
@@ -446,25 +446,13 @@ fn assert_percent(percent: f64) {
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#hsl-to-rgb
-fn hsla_to_rgba(h: f64, mut s: f64, mut l: f64, mut a: f64) -> (u8, u8, u8, u8) {
+fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> (u8, u8, u8, u8) {
     debug_assert!(
         (0.0..=360.0).contains(&h),
         "h must be between 0.0 and 360.0"
     );
-    debug_assert!(
-        (0.0..=100.0).contains(&s),
-        "s must be between 0.0 and 100.0"
-    );
-    debug_assert!(
-        (0.0..=100.0).contains(&l),
-        "l must be between 0.0 and 100.0"
-    );
-
-    // Since we'll use a range of 0.0-100.0 for the saturation, lightness, and alpha, the first
-    // step is to divide them by 100.0 to values between 0.0 and 1.0.
-    s /= 100.0;
-    l /= 100.0;
-    a /= 100.0;
+    debug_assert!((0.0..=1.0).contains(&s), "s must be between 0.0 and 1.0");
+    debug_assert!((0.0..=1.0).contains(&l), "l must be between 0.0 and 1.0");
 
     // Next, we find chroma (c), which is color intensity
     let c = (1.0 - (2.0 * l - 1.0).abs()) * s;
@@ -504,11 +492,12 @@ fn hsla_to_rgba(h: f64, mut s: f64, mut l: f64, mut a: f64) -> (u8, u8, u8, u8) 
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#rgb-to-hsl
 fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> (f64, f64, f64, f64) {
-    // First, we must divide the red, green, and blue, and alpha by 255 to use values between 0.0 and 1.0.
+    // First, we must divide the red, green, and blue, and alpha by 255 to use values between 0.0
+    // and 1.0.
     let r = r as f64 / 255.0;
     let g = g as f64 / 255.0;
     let b = b as f64 / 255.0;
-    let mut a = a as f64 / 255.0;
+    let a = a as f64 / 255.0;
 
     // Then we find the minimum and maximum of those values (c_min and c_max) as well as the
     // difference between them (delta).
@@ -540,23 +529,18 @@ fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> (f64, f64, f64, f64) {
     }
 
     // Calculate lightness
-    let mut l = (c_max + c_min) / 2.0;
+    let l = (c_max + c_min) / 2.0;
 
     // Calculate saturation
-    let mut s = if delta == 0.0 {
+    let s = if delta == 0.0 {
         0.0
     } else {
         // For rounding issues we need to ensure we stay below 1.0
         (delta / (1.0 - (2.0 * l - 1.0).abs())).min(1.0)
     };
 
-    // Multiply l, s, and a by 100
-    s *= 100.0;
-    l *= 100.0;
-    a *= 100.0;
-
-    debug_assert!(s <= 100.0);
-    debug_assert!(l <= 100.0);
+    debug_assert!(s <= 1.0);
+    debug_assert!(l <= 1.0);
 
     (h, s, l, a)
 }
@@ -667,11 +651,11 @@ mod tests {
         };
 
         assert_float(29.999999999999996, h);
-        assert_float(50.000000000000014, s);
-        assert_float(39.215686274509810, l);
-        assert_float(20.0, a);
+        assert_float(0.50000000000000014, s);
+        assert_float(0.39215686274509810, l);
+        assert_float(0.2, a);
 
-        // Ensure saturation is within 0.0 and 100.0
+        // Ensure saturation is within 0.0 and 1.0
         Color::<ZRGB>::new(0xff2009).to_hsla();
     }
 
