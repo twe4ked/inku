@@ -102,14 +102,6 @@ mod private {
     impl Sealed for super::RGBA {}
 }
 
-fn decode(color: u32) -> [u8; 4] {
-    color.to_be_bytes()
-}
-
-fn encode(color: [u8; 4]) -> u32 {
-    u32::from_be_bytes(color)
-}
-
 /// ZRGB (0RGB) storage format.
 ///
 /// ```text
@@ -129,13 +121,13 @@ impl Storage for ZRGB {
     }
 
     fn decode(color: u32) -> [u8; 4] {
-        let [_, r, g, b] = decode(color);
+        let [_, r, g, b] = color.to_be_bytes();
         [r, g, b, 0]
     }
 
     fn encode(color: [u8; 4]) -> u32 {
         let [r, g, b, _] = color;
-        encode([0, r, g, b])
+        u32::from_be_bytes([0, r, g, b])
     }
 
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
@@ -159,11 +151,11 @@ pub struct RGBA;
 
 impl Storage for RGBA {
     fn decode(color: u32) -> [u8; 4] {
-        decode(color)
+        color.to_be_bytes()
     }
 
     fn encode(color: [u8; 4]) -> u32 {
-        encode(color)
+        u32::from_be_bytes(color)
     }
 }
 
