@@ -354,7 +354,7 @@ impl<T: Storage> Color<T> {
     }
 }
 
-#[cfg(not(any(test, feature = "color_debug")))]
+#[cfg(not(any(test, feature = "crossterm")))]
 impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let storage = format!("{}", std::any::type_name::<T>())
@@ -368,7 +368,7 @@ impl<T: Storage> fmt::Debug for Color<T> {
     }
 }
 
-#[cfg(any(test, feature = "color_debug"))]
+#[cfg(any(test, feature = "crossterm"))]
 impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use crossterm::style;
