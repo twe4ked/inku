@@ -82,13 +82,23 @@ use std::marker::PhantomData;
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
 pub struct Color<T: Storage>(u32, PhantomData<T>);
 
-#[doc(hidden)]
+/// A private trait used to customise the way the RGBA channels are packed into a `u32`.
+///
+/// It's private because don't expect there to be many useful formats to implement. Please open a
+/// PR if a format you wish to use is missing.
 pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
+    /// Run before storing a "raw" `u32`.
     fn init(color: u32) -> u32 {
         color
     }
+
+    /// Unpack a `u32` to an array of `u8`s in RGBA order.
     fn to_rgba(color: u32) -> [u8; 4];
+
+    /// Pack an array of `u8`s in RGBA order into a `u32`.
     fn from_rgba(color: [u8; 4]) -> u32;
+
+    /// Write out the `u32` for debugging.
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
         write!(w, "{:#010x}", color)
     }
