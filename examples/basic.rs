@@ -1,7 +1,7 @@
 type RGBA = inku::Color<inku::RGBA>;
 type ZRGB = inku::Color<inku::ZRGB>;
 
-const RED: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8) = |_r, g, b, a| (255, g, b, a);
+const RED: fn([u8; 4]) -> [u8; 4] = |[_r, g, b, a]| [255, g, b, a];
 
 fn main() {
     let mut color = RGBA::new(0x01020304);

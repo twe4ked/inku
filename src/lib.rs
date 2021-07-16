@@ -87,8 +87,8 @@ pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
     fn init(color: u32) -> u32 {
         color
     }
-    fn decode(color: u32) -> (u8, u8, u8, u8);
-    fn encode(r: u8, g: u8, b: u8, a: u8) -> u32;
+    fn decode(color: u32) -> [u8; 4];
+    fn encode(color: [u8; 4]) -> u32;
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
         write!(w, "{:#010x}", color)
     }
@@ -102,13 +102,12 @@ mod private {
     impl Sealed for super::RGBA {}
 }
 
-fn decode(color: u32) -> (u8, u8, u8, u8) {
-    let b = color.to_be_bytes();
-    (b[0] as u8, b[1] as u8, b[2] as u8, b[3] as u8)
+fn decode(color: u32) -> [u8; 4] {
+    color.to_be_bytes()
 }
 
-fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
-    u32::from_be_bytes([b1, b2, b3, b4])
+fn encode(color: [u8; 4]) -> u32 {
+    u32::from_be_bytes(color)
 }
 
 /// ZRGB (0RGB) storage format.
@@ -129,13 +128,14 @@ impl Storage for ZRGB {
         color & 0xffffff
     }
 
-    fn decode(color: u32) -> (u8, u8, u8, u8) {
-        let (_, r, g, b) = decode(color);
-        (r, g, b, 0)
+    fn decode(color: u32) -> [u8; 4] {
+        let [_, r, g, b] = decode(color);
+        [r, g, b, 0]
     }
 
-    fn encode(r: u8, g: u8, b: u8, _a: u8) -> u32 {
-        encode(0, r, g, b)
+    fn encode(color: [u8; 4]) -> u32 {
+        let [r, g, b, _] = color;
+        encode([0, r, g, b])
     }
 
     fn write_hex(w: &mut dyn Write, color: u32) -> fmt::Result {
@@ -158,12 +158,12 @@ impl Storage for ZRGB {
 pub struct RGBA;
 
 impl Storage for RGBA {
-    fn decode(color: u32) -> (u8, u8, u8, u8) {
+    fn decode(color: u32) -> [u8; 4] {
         decode(color)
     }
 
-    fn encode(r: u8, g: u8, b: u8, a: u8) -> u32 {
-        encode(r, g, b, a)
+    fn encode(color: [u8; 4]) -> u32 {
+        encode(color)
     }
 }
 
@@ -271,7 +271,7 @@ impl<T: Storage> Color<T> {
     /// The [percieved brightness](https://www.w3.org/TR/AERT#color-contrast) of the color (a
     /// number between `0.0` and `1.0`).
     pub fn brightness(self) -> f64 {
-        let (r, g, b, _a) = self.to_rgba();
+        let [r, g, b, _a] = self.to_rgba();
         let r = r as f64 / 255.0;
         let g = g as f64 / 255.0;
         let b = b as f64 / 255.0;
@@ -284,7 +284,7 @@ impl<T: Storage> Color<T> {
         self.brightness() > 0.5
     }
 
-    /// Maps `(r1, g1, b1, a1)` to `(r2, g2, b2, a2)` by applying a function to the channels.
+    /// Maps `[u8; 4]` to `[u8; 4]` by applying a function to the channels.
     ///
     /// # Examples
     ///
@@ -292,29 +292,29 @@ impl<T: Storage> Color<T> {
     /// # use inku::{Color, RGBA};
     /// let color = Color::<RGBA>::new(0x00000011);
     /// assert_eq!(
-    ///     color.map(|r, g, b, a| (r, g, b, a + 0x22)).to_u32(),
+    ///     color.map(|[r, g, b, a]| [r, g, b, a + 0x22]).to_u32(),
     ///     0x00000033
     /// );
     /// ```
     ///
     /// ```
     /// # use inku::{Color,  ZRGB};
-    /// const F: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8) = |r, g, b, a| {
+    /// const F: fn([u8; 4]) -> [u8; 4] = |[r, g, b, a]| {
     ///     assert_eq!(r, 0x22);
     ///     assert_eq!(g, 0x33);
     ///     assert_eq!(b, 0x44);
     ///     assert_eq!(a, 0x00);
-    ///     (1, 2, 3, 4)
+    ///     [1, 2, 3, 4]
     /// };
     /// let color = Color::<ZRGB>::new(0x11223344);
     /// assert_eq!(color.map(F).to_u32(), 0x00010203);
     /// ```
     pub fn map<F>(&self, f: F) -> Self
     where
-        F: Fn(u8, u8, u8, u8) -> (u8, u8, u8, u8),
+        F: Fn([u8; 4]) -> [u8; 4],
     {
-        let (r, g, b, a) = self.to_rgba();
-        let (r, g, b, a) = f(r, g, b, a);
+        let [r, g, b, a] = self.to_rgba();
+        let [r, g, b, a] = f([r, g, b, a]);
         Self::from_rgba(r, g, b, a)
     }
 
@@ -327,13 +327,12 @@ impl<T: Storage> Color<T> {
         Color::from_hsla(h, s, l, a)
     }
 
-    fn to_rgba(self) -> (u8, u8, u8, u8) {
-        let (r, g, b, a) = T::decode(self.0);
-        (r, g, b, a)
+    fn to_rgba(self) -> [u8; 4] {
+        T::decode(self.0)
     }
 
     fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self::new(T::encode(r, g, b, a))
+        Self::new(T::encode([r, g, b, a]))
     }
 
     // NOTE: These {to,from}_hsla functions are private because if you're already dealing with
@@ -341,13 +340,13 @@ impl<T: Storage> Color<T> {
     // fidelity.
 
     fn to_hsla(self) -> (f64, f64, f64, f64) {
-        let (r, g, b, a) = self.to_rgba();
+        let [r, g, b, a] = self.to_rgba();
         let (h, s, l, a) = rgba_to_hsla(r, g, b, a);
         (h, s, l, a)
     }
 
     fn from_hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
-        let (r, g, b, a) = hsla_to_rgba(h, s, l, a);
+        let [r, g, b, a] = hsla_to_rgba(h, s, l, a);
         Self::from_rgba(r as u8, g as u8, b as u8, a as u8)
     }
 }
@@ -372,7 +371,7 @@ impl<T: Storage> fmt::Debug for Color<T> {
             } else {
                 style::Color::White
             });
-            let (r, g, b, _a) = self.to_rgba();
+            let [r, g, b, _a] = self.to_rgba();
             let bg = style::SetBackgroundColor(style::Color::Rgb { r, g, b });
 
             write!(f, "{}{}", fg, bg)?;
@@ -415,14 +414,15 @@ impl<T: Storage> From<Color<T>> for u32 {
 
 impl<T: Storage> From<Color<T>> for (u8, u8, u8) {
     fn from(color: Color<T>) -> (u8, u8, u8) {
-        let (r, g, b, _a) = color.to_rgba();
+        let [r, g, b, _a] = color.to_rgba();
         (r, g, b)
     }
 }
 
 impl<T: Storage> From<Color<T>> for (u8, u8, u8, u8) {
     fn from(color: Color<T>) -> (u8, u8, u8, u8) {
-        color.to_rgba()
+        let [r, g, b, a] = color.to_rgba();
+        (r, g, b, a)
     }
 }
 
@@ -435,7 +435,7 @@ fn assert_percent(percent: f64) {
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#hsl-to-rgb
-fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> (u8, u8, u8, u8) {
+fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> [u8; 4] {
     debug_assert!(
         (0.0..=360.0).contains(&h),
         "h must be between 0.0 and 360.0"
@@ -478,7 +478,7 @@ fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> (u8, u8, u8, u8) {
     // Alpha is simply multiplied by 255.0
     a *= 255.0;
 
-    (r as u8, g as u8, b as u8, a as u8)
+    [r as u8, g as u8, b as u8, a as u8]
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#rgb-to-hsl
@@ -618,7 +618,7 @@ mod tests {
     #[test]
     fn to_rgba() {
         assert_eq!(
-            (0xbb, 0xcc, 0xdd, 0x00),
+            [0xbb, 0xcc, 0xdd, 0x00],
             Color::<ZRGB>::new(0xaabbccdd).to_rgba()
         );
     }
@@ -670,7 +670,7 @@ mod tests {
         let color = Color::<ZRGB>::new(0x00000000);
         assert_eq!(
             color
-                .map(|r, g, b, a| (r + 1, g + 2, b + 3, a + 4))
+                .map(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
                 .to_u32(),
             0x00010203
         );
@@ -678,24 +678,24 @@ mod tests {
         let color = Color::<RGBA>::new(0x00000000);
         assert_eq!(
             color
-                .map(|r, g, b, a| (r + 1, g + 2, b + 3, a + 4))
+                .map(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
                 .to_u32(),
             0x01020304
         );
 
-        const RED: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8) = |_r, g, b, a| (255, g, b, a);
+        const RED: fn([u8; 4]) -> [u8; 4] = |[_r, g, b, a]| [255, g, b, a];
         assert_eq!(color.map(RED).to_u32(), 0xff000000);
     }
 
     #[test]
     fn storage() {
         assert_eq!(0x00bbccdd, ZRGB::init(0xaabbccdd));
-        assert_eq!((0xbb, 0xcc, 0xdd, 0x00), ZRGB::decode(0xaabbccdd));
-        assert_eq!(0x00bbccdd, ZRGB::encode(0xbb, 0xcc, 0xdd, 0xaa));
+        assert_eq!([0xbb, 0xcc, 0xdd, 0x00], ZRGB::decode(0xaabbccdd));
+        assert_eq!(0x00bbccdd, ZRGB::encode([0xbb, 0xcc, 0xdd, 0xaa]));
 
         assert_eq!(0xaabbccdd, RGBA::init(0xaabbccdd));
-        assert_eq!((0xaa, 0xbb, 0xcc, 0xdd), RGBA::decode(0xaabbccdd));
-        assert_eq!(0xaabbccdd, RGBA::encode(0xaa, 0xbb, 0xcc, 0xdd));
+        assert_eq!([0xaa, 0xbb, 0xcc, 0xdd], RGBA::decode(0xaabbccdd));
+        assert_eq!(0xaabbccdd, RGBA::encode([0xaa, 0xbb, 0xcc, 0xdd]));
 
         // For sanity checking; cargo test storage -- --nocapture
         eprintln!("{:?}", Color::<ZRGB>::new(0xff_facade));
@@ -705,7 +705,7 @@ mod tests {
     #[test]
     fn test_rgba_to_hsla() {
         let (h, s, l, a) = rgba_to_hsla(1, 2, 3, 4);
-        let (r, g, b, a) = hsla_to_rgba(h, s, l, a);
+        let [r, g, b, a] = hsla_to_rgba(h, s, l, a);
 
         assert_eq!(r, 1);
         assert_eq!(g, 2);
