@@ -311,27 +311,30 @@ impl<T: Storage> Color<T> {
     /// # Examples
     ///
     /// ```
-    /// let color = inku::Color::<inku::RGBA>::new(0x00000011);
+    /// # use inku::{Color, RGBA};
+    /// let color = Color::<RGBA>::new(0x00000011);
     /// assert_eq!(
     ///     color.map(|r, g, b, a| (r, g, b, a + 0x22)).to_u32(),
     ///     0x00000033
     /// );
-    ///
-    /// let color = inku::Color::<inku::ZRGB>::new(0x11223344);
-    /// assert_eq!(
-    ///     color
-    ///         .map(|r, g, b, a| {
-    ///             assert_eq!(r, 0x22);
-    ///             assert_eq!(g, 0x33);
-    ///             assert_eq!(b, 0x44);
-    ///             assert_eq!(a, 0x00);
-    ///             (1, 2, 3, 4)
-    ///         })
-    ///         .to_u32(),
-    ///     0x00010203
-    /// );
     /// ```
-    pub fn map(&self, f: fn(r: u8, g: u8, b: u8, a: u8) -> (u8, u8, u8, u8)) -> Self {
+    ///
+    /// ```
+    /// # use inku::{Color,  ZRGB};
+    /// const F: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8) = |r, g, b, a| {
+    ///     assert_eq!(r, 0x22);
+    ///     assert_eq!(g, 0x33);
+    ///     assert_eq!(b, 0x44);
+    ///     assert_eq!(a, 0x00);
+    ///     (1, 2, 3, 4)
+    /// };
+    /// let color = Color::<ZRGB>::new(0x11223344);
+    /// assert_eq!(color.map(F).to_u32(), 0x00010203);
+    /// ```
+    pub fn map<F>(&self, f: F) -> Self
+    where
+        F: Fn(u8, u8, u8, u8) -> (u8, u8, u8, u8),
+    {
         let (r, g, b, a) = self.to_rgba();
         let (r, g, b, a) = f(r, g, b, a);
         Self::from_rgba(r, g, b, a)
@@ -549,7 +552,7 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Color, Storage, RGBA, ZRGB};
+    use super::*;
 
     #[test]
     fn lighten() {
@@ -693,6 +696,9 @@ mod tests {
                 .to_u32(),
             0x01020304
         );
+
+        const RED: fn(u8, u8, u8, u8) -> (u8, u8, u8, u8) = |_r, g, b, a| (255, g, b, a);
+        assert_eq!(color.map(RED).to_u32(), 0xff000000);
     }
 
     #[test]
