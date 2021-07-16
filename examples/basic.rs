@@ -10,7 +10,7 @@ fn main() {
     color = color.lighten(0.5);
     eprintln!("Lighten 0.5\t{:?}", color);
 
-    color = color.map(RED);
+    color = color.map_rgba(RED);
     eprintln!("Max red channel\t{:?}", color);
 
     for _ in 0..3 {

@@ -294,7 +294,7 @@ impl<T: Storage> Color<T> {
     /// # use inku::{Color, RGBA};
     /// let color = Color::<RGBA>::new(0x00000011);
     /// assert_eq!(
-    ///     color.map(|[r, g, b, a]| [r, g, b, a + 0x22]).to_u32(),
+    ///     color.map_rgba(|[r, g, b, a]| [r, g, b, a + 0x22]).to_u32(),
     ///     0x00000033
     /// );
     /// ```
@@ -309,9 +309,9 @@ impl<T: Storage> Color<T> {
     ///     [1, 2, 3, 4]
     /// };
     /// let color = Color::<ZRGB>::new(0x11223344);
-    /// assert_eq!(color.map(F).to_u32(), 0x00010203);
+    /// assert_eq!(color.map_rgba(F).to_u32(), 0x00010203);
     /// ```
-    pub fn map<F>(&self, f: F) -> Self
+    pub fn map_rgba<F>(&self, f: F) -> Self
     where
         F: Fn([u8; 4]) -> [u8; 4],
     {
@@ -666,11 +666,11 @@ mod tests {
     }
 
     #[test]
-    fn map() {
+    fn map_rgba() {
         let color = Color::<ZRGB>::new(0x00000000);
         assert_eq!(
             color
-                .map(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
+                .map_rgba(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
                 .to_u32(),
             0x00010203
         );
@@ -678,13 +678,13 @@ mod tests {
         let color = Color::<RGBA>::new(0x00000000);
         assert_eq!(
             color
-                .map(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
+                .map_rgba(|[r, g, b, a]| [r + 1, g + 2, b + 3, a + 4])
                 .to_u32(),
             0x01020304
         );
 
         const RED: fn([u8; 4]) -> [u8; 4] = |[_r, g, b, a]| [255, g, b, a];
-        assert_eq!(color.map(RED).to_u32(), 0xff000000);
+        assert_eq!(color.map_rgba(RED).to_u32(), 0xff000000);
     }
 
     #[test]
