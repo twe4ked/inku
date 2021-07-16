@@ -103,19 +103,12 @@ mod private {
 }
 
 fn decode(color: u32) -> (u8, u8, u8, u8) {
-    let b1 = (color >> 24) & 0xff;
-    let b2 = (color >> 16) & 0xff;
-    let b3 = (color >> 8) & 0xff;
-    let b4 = color & 0xff;
-    (b1 as u8, b2 as u8, b3 as u8, b4 as u8)
+    let b = color.to_be_bytes();
+    (b[0] as u8, b[1] as u8, b[2] as u8, b[3] as u8)
 }
 
 fn encode(b1: u8, b2: u8, b3: u8, b4: u8) -> u32 {
-    let b1 = b1 as u32;
-    let b2 = b2 as u32;
-    let b3 = b3 as u32;
-    let b4 = b4 as u32;
-    (b1 << 24) | (b2 << 16) | (b3 << 8) | b4
+    u32::from_be_bytes([b1, b2, b3, b4])
 }
 
 /// ZRGB (0RGB) storage format.
