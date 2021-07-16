@@ -200,14 +200,11 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn lighten(self, percent: f64) -> Self {
         assert_percent(percent);
-
-        // First convert to HSL
-        let (h, s, mut l, a) = self.to_hsla();
-
-        // Increase the lightness and ensure we don't go over 100.0
-        l = (l + percent * 100.0).min(100.0);
-
-        Color::from_hsla(h, s, l, a)
+        self.map_hsla(|h, s, mut l, a| {
+            // Increase the lightness and ensure we don't go over 100.0
+            l = (l + percent * 100.0).min(100.0);
+            (h, s, l, a)
+        })
     }
 
     /// Darkens the color by translating to HSL color space then adjusting the lightness value.
@@ -218,14 +215,11 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn darken(self, percent: f64) -> Self {
         assert_percent(percent);
-
-        // First convert to HSL
-        let (h, s, mut l, a) = self.to_hsla();
-
-        // Decrease the lightness and ensure we don't go below 0.0
-        l = (l - percent * 100.0).max(0.0);
-
-        Color::from_hsla(h, s, l, a)
+        self.map_hsla(|h, s, mut l, a| {
+            // Decrease the lightness and ensure we don't go below 0.0
+            l = (l - percent * 100.0).max(0.0);
+            (h, s, l, a)
+        })
     }
 
     /// Increases saturation of the color by translating to HSL color space then adjusting the
@@ -237,14 +231,11 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn saturate(self, percent: f64) -> Self {
         assert_percent(percent);
-
-        // First convert to HSL
-        let (h, mut s, l, a) = self.to_hsla();
-
-        // Increase the saturation and ensure we don't go over 100.0
-        s = (s + percent * 100.0).min(100.0);
-
-        Color::from_hsla(h, s, l, a)
+        self.map_hsla(|h, mut s, l, a| {
+            // Increase the saturation and ensure we don't go over 100.0
+            s = (s + percent * 100.0).min(100.0);
+            (h, s, l, a)
+        })
     }
 
     /// Decreases saturation of the color by translating to HSL color space then adjusting the
@@ -256,14 +247,11 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn desaturate(self, percent: f64) -> Self {
         assert_percent(percent);
-
-        // First convert to HSL
-        let (h, mut s, l, a) = self.to_hsla();
-
-        // Decrease the saturation and ensure we don't go below 0.0
-        s = (s - percent * 100.0).max(0.0);
-
-        Color::from_hsla(h, s, l, a)
+        self.map_hsla(|h, mut s, l, a| {
+            // Decrease the saturation and ensure we don't go below 0.0
+            s = (s - percent * 100.0).max(0.0);
+            (h, s, l, a)
+        })
     }
 
     /// Rotate the hue by translating to HSL color space then adjusting the hue value. Takes a
@@ -275,14 +263,11 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn rotate_hue(self, amount: f64) -> Self {
         assert!(amount >= 0.0, "amount must be greater than 0.0");
-
-        // First convert to HSL
-        let (mut h, s, l, a) = self.to_hsla();
-
-        // Add the amount and ensure the value is a positive number between 0.0 and 360.0
-        h = ((h + amount) % 360.0 + 360.0) % 360.0;
-
-        Color::from_hsla(h, s, l, a)
+        self.map_hsla(|mut h, s, l, a| {
+            // Add the amount and ensure the value is a positive number between 0.0 and 360.0
+            h = ((h + amount) % 360.0 + 360.0) % 360.0;
+            (h, s, l, a)
+        })
     }
 
     /// Returns the underlying `u32`.
@@ -338,6 +323,15 @@ impl<T: Storage> Color<T> {
         let (r, g, b, a) = self.to_rgba();
         let (r, g, b, a) = f(r, g, b, a);
         Self::from_rgba(r, g, b, a)
+    }
+
+    fn map_hsla<F>(&self, f: F) -> Self
+    where
+        F: Fn(f64, f64, f64, f64) -> (f64, f64, f64, f64),
+    {
+        let (h, s, l, a) = self.to_hsla();
+        let (h, s, l, a) = f(h, s, l, a);
+        Color::from_hsla(h, s, l, a)
     }
 
     fn to_rgba(self) -> (u8, u8, u8, u8) {
