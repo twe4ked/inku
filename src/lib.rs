@@ -356,7 +356,8 @@ impl<T: Storage> Color<T> {
 
 impl<T: Storage> fmt::Debug for Color<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let storage = format!("{}", std::any::type_name::<T>())
+        let storage = std::any::type_name::<T>()
+            .to_string()
             .split("::")
             .last()
             .expect("no type name")
