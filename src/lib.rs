@@ -190,10 +190,10 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn lighten(self, percent: f64) -> Self {
         assert_percent(percent);
-        self.map_hsla(|h, s, mut l, a| {
+        self.map_hsla(|[h, s, mut l, a]| {
             // Increase the lightness and ensure we don't go over 1.0
             l = (l + percent).min(1.0);
-            (h, s, l, a)
+            [h, s, l, a]
         })
     }
 
@@ -205,10 +205,10 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn darken(self, percent: f64) -> Self {
         assert_percent(percent);
-        self.map_hsla(|h, s, mut l, a| {
+        self.map_hsla(|[h, s, mut l, a]| {
             // Decrease the lightness and ensure we don't go below 0.0
             l = (l - percent).max(0.0);
-            (h, s, l, a)
+            [h, s, l, a]
         })
     }
 
@@ -221,10 +221,10 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn saturate(self, percent: f64) -> Self {
         assert_percent(percent);
-        self.map_hsla(|h, mut s, l, a| {
+        self.map_hsla(|[h, mut s, l, a]| {
             // Increase the saturation and ensure we don't go over 1.0
             s = (s + percent).min(1.0);
-            (h, s, l, a)
+            [h, s, l, a]
         })
     }
 
@@ -237,10 +237,10 @@ impl<T: Storage> Color<T> {
     #[must_use]
     pub fn desaturate(self, percent: f64) -> Self {
         assert_percent(percent);
-        self.map_hsla(|h, mut s, l, a| {
+        self.map_hsla(|[h, mut s, l, a]| {
             // Decrease the saturation and ensure we don't go below 0.0
             s = (s - percent).max(0.0);
-            (h, s, l, a)
+            [h, s, l, a]
         })
     }
 
@@ -248,10 +248,10 @@ impl<T: Storage> Color<T> {
     /// value between `0.0` and `360.0`.
     #[must_use]
     pub fn rotate_hue(self, amount: f64) -> Self {
-        self.map_hsla(|mut h, s, l, a| {
+        self.map_hsla(|[mut h, s, l, a]| {
             // Add the amount and ensure the value is a positive number between 0.0 and 360.0
             h = ((h + amount) % 360.0 + 360.0) % 360.0;
-            (h, s, l, a)
+            [h, s, l, a]
         })
     }
 
@@ -312,10 +312,9 @@ impl<T: Storage> Color<T> {
 
     fn map_hsla<F>(&self, f: F) -> Self
     where
-        F: Fn(f64, f64, f64, f64) -> (f64, f64, f64, f64),
+        F: Fn([f64; 4]) -> [f64; 4],
     {
-        let (h, s, l, a) = self.to_hsla();
-        let (h, s, l, a) = f(h, s, l, a);
+        let [h, s, l, a] = f(self.to_hsla());
         Color::from_hsla(h, s, l, a)
     }
 
@@ -331,10 +330,9 @@ impl<T: Storage> Color<T> {
     // colors in HSLA you're probably better off keeping your colors in HSLA so you don't lose
     // fidelity.
 
-    fn to_hsla(self) -> (f64, f64, f64, f64) {
+    fn to_hsla(self) -> [f64; 4] {
         let [r, g, b, a] = self.to_rgba();
-        let (h, s, l, a) = rgba_to_hsla(r, g, b, a);
-        (h, s, l, a)
+        rgba_to_hsla(r, g, b, a)
     }
 
     fn from_hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
@@ -474,7 +472,7 @@ fn hsla_to_rgba(h: f64, s: f64, l: f64, mut a: f64) -> [u8; 4] {
 }
 
 // https://css-tricks.com/converting-color-spaces-in-javascript/#rgb-to-hsl
-fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> (f64, f64, f64, f64) {
+fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> [f64; 4] {
     // First, we must divide the red, green, and blue, and alpha by 255 to use values between 0.0
     // and 1.0.
     let r = r as f64 / 255.0;
@@ -525,7 +523,7 @@ fn rgba_to_hsla(r: u8, g: u8, b: u8, a: u8) -> (f64, f64, f64, f64) {
     debug_assert!(s <= 1.0);
     debug_assert!(l <= 1.0);
 
-    (h, s, l, a)
+    [h, s, l, a]
 }
 
 #[cfg(test)]
@@ -626,7 +624,7 @@ mod tests {
     #[test]
     fn to_hsla() {
         let color = Color::<RGBA>::new(0x96643233);
-        let (h, s, l, a) = color.to_hsla();
+        let [h, s, l, a] = color.to_hsla();
 
         let assert_float = |a: f64, b: f64| {
             let error_margin = std::f64::EPSILON;
@@ -696,7 +694,7 @@ mod tests {
 
     #[test]
     fn test_rgba_to_hsla() {
-        let (h, s, l, a) = rgba_to_hsla(1, 2, 3, 4);
+        let [h, s, l, a] = rgba_to_hsla(1, 2, 3, 4);
         let [r, g, b, a] = hsla_to_rgba(h, s, l, a);
 
         assert_eq!(r, 1);
