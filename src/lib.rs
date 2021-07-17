@@ -174,19 +174,22 @@ impl<T: Storage> Color<T> {
     ///
     /// # Examples
     ///
+    /// Using [`ZRGB`] storage:
+    ///
     /// ```
     /// type Color = inku::Color<inku::ZRGB>;
-    /// let color = Color::new(0x000000);
+    ///
+    /// let color = Color::new(0x11223344);
+    /// assert_eq!(0x223344, color.to_u32());
     /// ```
     ///
-    /// Using `ZRGB`, the `u32` is treated as follows:
+    /// Using [`RGBA`] storage:
     ///
-    /// ```text
-    /// 0x00000000
-    ///   ^^ ignored (zeroed out)
-    ///     ^^ red
-    ///       ^^ green
-    ///         ^^ blue
+    /// ```
+    /// type Color = inku::Color<inku::RGBA>;
+    ///
+    /// let color = Color::new(0x11223344);
+    /// assert_eq!(0x11223344, color.to_u32());
     /// ```
     pub fn new(color: u32) -> Self {
         Self(T::from_raw(color), PhantomData)
