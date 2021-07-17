@@ -197,6 +197,15 @@ impl<T: Storage> Color<T> {
     /// # Panics
     ///
     /// Panics if `percent` is not between `0.0` and `1.0`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// let mut color = Color::<RGBA>::new(0x11223344);
+    /// color = color.lighten(0.2);
+    /// assert_eq!(Color::<RGBA>::new(0x2a557f44), color);
+    /// ```
     #[must_use]
     pub fn lighten(self, percent: f64) -> Self {
         assert_percent(percent);
@@ -212,6 +221,15 @@ impl<T: Storage> Color<T> {
     /// # Panics
     ///
     /// Panics if `percent` is not between `0.0` and `1.0`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// let mut color = Color::<RGBA>::new(0x11223344);
+    /// color = color.darken(0.2);
+    /// assert_eq!(Color::<RGBA>::new(0x00000044), color);
+    /// ```
     #[must_use]
     pub fn darken(self, percent: f64) -> Self {
         assert_percent(percent);
@@ -228,6 +246,15 @@ impl<T: Storage> Color<T> {
     /// # Panics
     ///
     /// Panics if `percent` is not between `0.0` and `1.0`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// let mut color = Color::<RGBA>::new(0x11223344);
+    /// color = color.saturate(0.5);
+    /// assert_eq!(Color::<RGBA>::new(0x00224344), color);
+    /// ```
     #[must_use]
     pub fn saturate(self, percent: f64) -> Self {
         assert_percent(percent);
@@ -244,6 +271,15 @@ impl<T: Storage> Color<T> {
     /// # Panics
     ///
     /// Panics if `percent` is not between `0.0` and `1.0`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// let mut color = Color::<RGBA>::new(0x11223344);
+    /// color = color.desaturate(0.5);
+    /// assert_eq!(Color::<RGBA>::new(0x21222244), color);
+    /// ```
     #[must_use]
     pub fn desaturate(self, percent: f64) -> Self {
         assert_percent(percent);
@@ -256,6 +292,15 @@ impl<T: Storage> Color<T> {
 
     /// Rotate the hue by translating to HSL color space then adjusting the hue value. Takes a
     /// value between `0.0` and `360.0`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// let mut color = Color::<RGBA>::new(0x11223344);
+    /// color = color.rotate_hue(45.0);
+    /// assert_eq!(Color::<RGBA>::new(0x19103344), color);
+    /// ```
     #[must_use]
     pub fn rotate_hue(self, amount: f64) -> Self {
         self.map_hsla(|[mut h, s, l, a]| {
@@ -266,12 +311,27 @@ impl<T: Storage> Color<T> {
     }
 
     /// Returns the underlying `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// assert_eq!(0x11223344, Color::<RGBA>::new(0x11223344).to_u32());
+    /// ```
     pub fn to_u32(self) -> u32 {
         self.0
     }
 
     /// The [percieved brightness](https://www.w3.org/TR/AERT#color-contrast) of the color (a
     /// number between `0.0` and `1.0`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// assert_eq!(0.2666666666666666, Color::<RGBA>::new(0x444444_ff).brightness());
+    /// assert_eq!(0.6, Color::<RGBA>::new(0x999999_ff).brightness());
+    /// ```
     pub fn brightness(self) -> f64 {
         let [r, g, b, _a] = self.to_rgba();
         let r = r as f64 / 255.0;
@@ -282,6 +342,14 @@ impl<T: Storage> Color<T> {
 
     /// Determine whether a color is perceived as a light color ([percieved
     /// brightness](https://www.w3.org/TR/AERT#color-contrast) is greater than `0.5`).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use inku::{Color, RGBA};
+    /// assert!(!Color::<RGBA>::new(0x444444_ff).is_light());
+    /// assert!(Color::<RGBA>::new(0x999999_ff).is_light());
+    /// ```
     pub fn is_light(self) -> bool {
         self.brightness() > 0.5
     }
