@@ -482,6 +482,20 @@ impl<T: Storage> From<(u8, u8, u8, u8)> for Color<T> {
     }
 }
 
+impl<T: Storage> From<[u8; 3]> for Color<T> {
+    fn from(rgb: [u8; 3]) -> Self {
+        let [r, g, b] = rgb;
+        Self::from_rgba(r, g, b, 0)
+    }
+}
+
+impl<T: Storage> From<[u8; 4]> for Color<T> {
+    fn from(rgba: [u8; 4]) -> Self {
+        let [r, g, b, a] = rgba;
+        Self::from_rgba(r, g, b, a)
+    }
+}
+
 impl<T: Storage> From<Color<T>> for u32 {
     fn from(color: Color<T>) -> u32 {
         color.to_u32()
@@ -499,6 +513,19 @@ impl<T: Storage> From<Color<T>> for (u8, u8, u8, u8) {
     fn from(color: Color<T>) -> (u8, u8, u8, u8) {
         let [r, g, b, a] = color.to_rgba();
         (r, g, b, a)
+    }
+}
+
+impl<T: Storage> From<Color<T>> for [u8; 3] {
+    fn from(color: Color<T>) -> [u8; 3] {
+        let [r, g, b, _a] = color.to_rgba();
+        [r, g, b]
+    }
+}
+
+impl<T: Storage> From<Color<T>> for [u8; 4] {
+    fn from(color: Color<T>) -> [u8; 4] {
+        color.to_rgba()
     }
 }
 
