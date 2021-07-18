@@ -130,11 +130,13 @@ impl Storage for ZRGB {
         color & 0xffffff
     }
 
+    #[inline]
     fn to_rgba(color: u32) -> [u8; 4] {
         let [_, r, g, b] = color.to_be_bytes();
         [r, g, b, 0]
     }
 
+    #[inline]
     fn from_rgba(color: [u8; 4]) -> u32 {
         let [r, g, b, _] = color;
         u32::from_be_bytes([0, r, g, b])
@@ -160,10 +162,12 @@ impl Storage for ZRGB {
 pub struct RGBA;
 
 impl Storage for RGBA {
+    #[inline]
     fn to_rgba(color: u32) -> [u8; 4] {
         color.to_be_bytes()
     }
 
+    #[inline]
     fn from_rgba(color: [u8; 4]) -> u32 {
         u32::from_be_bytes(color)
     }
