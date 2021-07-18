@@ -82,7 +82,7 @@ use std::marker::PhantomData;
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
 pub struct Color<T: Storage>(u32, PhantomData<T>);
 
-/// A private trait used to customise the way the RGBA channels are packed into a `u32`.
+/// A private trait used to specify the way the RGBA channels are packed into a `u32`.
 ///
 /// It's private because don't expect there to be many useful formats to implement. Please open a
 /// PR if a format you wish to use is missing.
