@@ -82,10 +82,12 @@ use std::marker::PhantomData;
 #[derive(Copy, Clone, PartialEq, Default, Hash)]
 pub struct Color<T: Storage>(u32, PhantomData<T>);
 
-/// A private trait used to specify the way the RGBA channels are packed into a `u32`.
+/// Used to specify the way the RGBA channels are packed into a `u32`.
 ///
-/// It's private because don't expect there to be many useful formats to implement. Please open a
-/// PR if a format you wish to use is missing.
+/// Storage is a [sealed trait] because don't expect there to be many useful formats to implement.
+/// Please open a PR if a format you wish to use is missing.
+///
+/// [sealed trait]: https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed
 pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
     /// Run before storing a "raw" `u32`.
     fn from_raw(color: u32) -> u32 {
@@ -105,7 +107,6 @@ pub trait Storage: PartialEq + Copy + Clone + private::Sealed {
 }
 
 mod private {
-    // https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed
     pub trait Sealed {}
 
     impl Sealed for super::ZRGB {}
