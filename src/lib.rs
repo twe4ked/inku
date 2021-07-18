@@ -375,17 +375,19 @@ impl<T: Storage> Color<T> {
     /// );
     /// ```
     ///
+    /// Channels are always in RGBA order:
+    ///
     /// ```
     /// # use inku::{Color,  ZRGB};
-    /// const F: fn([u8; 4]) -> [u8; 4] = |[r, g, b, a]| {
+    /// let mut color = Color::<ZRGB>::new(0x11223344);
+    /// color = color.map_rgba(|[r, g, b, a]| {
     ///     assert_eq!(r, 0x22);
     ///     assert_eq!(g, 0x33);
     ///     assert_eq!(b, 0x44);
     ///     assert_eq!(a, 0x00);
     ///     [1, 2, 3, 4]
-    /// };
-    /// let color = Color::<ZRGB>::new(0x11223344);
-    /// assert_eq!(color.map_rgba(F).to_u32(), 0x00010203);
+    /// });
+    /// assert_eq!(color.to_u32(), 0x00010203);
     /// ```
     pub fn map_rgba<F>(&self, f: F) -> Self
     where
