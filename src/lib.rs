@@ -47,7 +47,7 @@
 //! type RGBA = inku::Color<inku::RGBA>;
 //! let color = RGBA::new(0xfacadeff);
 //!
-//! // We convert the RGB values to HSL and desaturated the color
+//! // We convert the RGBA values to HSLA and desaturated the color
 //! let desaturated_color = color.desaturate(0.1);
 //! assert_eq!(0xf7ccdeff, desaturated_color.to_u32());
 //!
@@ -199,7 +199,7 @@ impl<T: Storage> Color<T> {
         Self(T::from_raw(color), PhantomData)
     }
 
-    /// Lightens the color by translating to HSL color space then adjusting the lightness value.
+    /// Lightens the color by translating to HSLA color space then adjusting the lightness value.
     ///
     /// # Panics
     ///
@@ -223,7 +223,7 @@ impl<T: Storage> Color<T> {
         })
     }
 
-    /// Darkens the color by translating to HSL color space then adjusting the lightness value.
+    /// Darkens the color by translating to HSLA color space then adjusting the lightness value.
     ///
     /// # Panics
     ///
@@ -247,7 +247,7 @@ impl<T: Storage> Color<T> {
         })
     }
 
-    /// Increases saturation of the color by translating to HSL color space then adjusting the
+    /// Increases saturation of the color by translating to HSLA color space then adjusting the
     /// saturation value.
     ///
     /// # Panics
@@ -272,7 +272,7 @@ impl<T: Storage> Color<T> {
         })
     }
 
-    /// Decreases saturation of the color by translating to HSL color space then adjusting the
+    /// Decreases saturation of the color by translating to HSLA color space then adjusting the
     /// saturation value.
     ///
     /// # Panics
@@ -297,7 +297,7 @@ impl<T: Storage> Color<T> {
         })
     }
 
-    /// Rotate the hue by translating to HSL color space then adjusting the hue value. Takes a
+    /// Rotate the hue by translating to HSLA color space then adjusting the hue value. Takes a
     /// value between `0.0` and `360.0`.
     ///
     /// # Examples
